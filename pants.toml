@@ -10,6 +10,9 @@ backend_packages = [
     "pants.backend.python.lint.isort",
 ]
 
+[anonymous-telemetry]
+enabled = true
+
 [python]
 interpreter_constraints = ["==3.8.*"]
 
