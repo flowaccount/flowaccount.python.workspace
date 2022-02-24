@@ -1,2 +1,11 @@
 [GLOBAL]
 pants_version = "2.9.0"
+
+backend_packages = [
+    "pants.backend.awslambda.python",
+    "pants.backend.python",
+    "pants.backend.python.lint.black",
+    "pants.backend.python.lint.docformatter",
+    "pants.backend.python.lint.flake8",
+    "pants.backend.python.lint.isort",
+]
