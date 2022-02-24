@@ -11,7 +11,7 @@ backend_packages = [
 ]
 
 [anonymous-telemetry]
-enabled = true
+enabled = false
 
 [python]
 interpreter_constraints = ["==3.8.*"]
