@@ -1,0 +1,36 @@
+service: etl-open-platform-status
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ap-southeast-1
+  layers:
+    - arn:aws:lambda:ap-southeast-1:697698820969:layer:aws-data-wrangler-layer-py3-8:1
+
+functions:
+  extract:
+    handler: handlers/extract_open_platform.handle
+  
+  clean:
+    handler: handlers/clean_open_platform.handle
+    events:
+      - s3:
+          bucket: pipat-raw-bucket
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: dynamodb/tables/flowaccount-open-platform-company-user-v2/
+            - suffix: manifest-summary.json
+          existing: true
+  
+  load:
+    handler: handlers/load_open_platform.handle
+    events:
+      - s3:
+          bucket: pipat-clean-bucket
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: dynamodb/tables/flowaccount-open-platform-company-user-v2/
+            - suffix: .parquet
+          existing: true
