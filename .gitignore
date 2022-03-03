@@ -159,3 +159,6 @@ cython_debug/
 
 # Serverless files
 .serverless
+
+# Serverless uses node packages for its plugins
+node_modules/
