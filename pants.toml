@@ -19,3 +19,6 @@ interpreter_constraints = ["==3.8.*"]
 [pytest]
 version = "pytest>=7.0"
 lockfile = "3rdparty/py/lockfiles/pytest.txt"
+
+[python-setup]
+requirement_constraints = "3rdparty/py/lockfiles/user_reqs.txt"
