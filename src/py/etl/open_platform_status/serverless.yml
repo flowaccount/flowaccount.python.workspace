@@ -13,8 +13,8 @@ functions:
   extract-open-platform:
     handler: handlers/extract_open_platform.handle
   
-  clean-open-platform:
-    handler: handlers/clean_open_platform.handle
+  clean-manifest:
+    handler: handlers/clean_manifest.handle
     events:
       - s3:
           bucket: pipat-raw-bucket

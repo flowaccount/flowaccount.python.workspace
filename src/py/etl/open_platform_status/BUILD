@@ -9,10 +9,10 @@ python_awslambda(
 )
 
 python_awslambda(
-    name='clean-open-platform',
+    name='clean-manifest',
     runtime='python3.8',
-    handler='handlers/clean_open_platform:handle',
-    description='Clean exported data and load into S3 clean bucket',
+    handler='handlers/clean_manifest:handle',
+    description='Clean export manifest summary and manifest files',
 )
 
 python_awslambda(
