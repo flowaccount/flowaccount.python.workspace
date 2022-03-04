@@ -151,7 +151,7 @@ def handle(event, context):
         dataset=True,
         partition_cols=["year", "month"],
         database=clean_catalog,
-        table="dynamo_export_manifest_files",
+        table="dynamodb_export_manifest_files",
     )
 
     return {"statusCode": 200}
