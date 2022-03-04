@@ -21,7 +21,7 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - prefix: dynamodb/tables/flowaccount-open-platform-company-user-v2/
-            - suffix: manifest-summary.json
+            - suffix: .json
           existing: true
   
   load:
