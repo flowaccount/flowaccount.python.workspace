@@ -9,7 +9,7 @@ python_awslambda(
 )
 
 python_awslambda(
-    name="clean-manifest",
+    name="clean-open-platform",
     runtime="python3.8",
     handler="handlers/clean_manifest:handle",
     description="Clean export manifest summary and manifest files",

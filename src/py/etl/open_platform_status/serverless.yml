@@ -13,10 +13,10 @@ functions:
   extract-open-platform:
     handler: handlers/extract_open_platform.handle
   
-  clean-manifest:
-    handler: handlers/clean_manifest.handle
-    role: cleanManifestRole
-    description: Clean new export manifest summary and manifest files
+  clean-open-platform:
+    handler: handlers/clean_open_platform.handle
+    role: cleanOpenPlatformRole
+    description: Clean new export manifest summary, manifest files and records
     events:
       - s3:
           bucket: pipat-raw-bucket
@@ -39,10 +39,10 @@ functions:
 
 resources:
   Resources:
-    cleanManifestRole:
+    cleanOpenPlatformRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: EtlDynamoDBCleanManifestRole
+        RoleName: EtlDynamoDBCleanOpenPlatformRole
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -52,7 +52,7 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: EtlDynamoDBCleanManifestPolicy
+          - PolicyName: EtlDynamoDBCleanOpenPlatformtPolicy
             PolicyDocument: 
               Version: '2012-10-17'
               Statement:
