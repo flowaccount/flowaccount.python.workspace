@@ -13,6 +13,7 @@ python_awslambda(
     runtime='python3.8',
     handler='handlers/clean_manifest:handle',
     description='Clean export manifest summary and manifest files',
+    dependencies=['3rdparty/py:awswrangler']
 )
 
 python_awslambda(

@@ -15,12 +15,14 @@ functions:
   
   clean-manifest:
     handler: handlers/clean_manifest.handle
+    role: cleanManifestRole
+    description: Clean new export manifest summary and manifest files
     events:
       - s3:
           bucket: pipat-raw-bucket
           event: s3:ObjectCreated:*
           rules:
-            - prefix: dynamodb/tables/flowaccount-open-platform-company-user-v2/
+            - prefix: dynamodb/tables/
             - suffix: .json
           existing: true
   
@@ -34,3 +36,54 @@ functions:
             - prefix: dynamodb/tables/flowaccount-open-platform-company-user-v2/
             - suffix: .parquet
           existing: true
+
+resources:
+  Resources:
+    cleanManifestRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: EtlDynamoDBCleanManifestRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: EtlDynamoDBCleanManifestPolicy
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+                # Allow create logging group
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:CreateLogGroup
+                  Resource:
+                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+                # Allow logging
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+                # Allow reading manifest from raw bucket
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                  Resource:
+                    - arn:aws:s3:::pipat-raw-bucket/*
+                # Allow writing manifest to clean bucket
+                - Effect: Allow
+                  Action:
+                    - s3:PutObject
+                  Resource:
+                    - arn:aws:s3:::pipat-clean-bucket/*
+                # Allow all Glue actions
+                - Effect: Allow
+                  Action:
+                    - glue:*
+                  Resource:
+                    - "*"
