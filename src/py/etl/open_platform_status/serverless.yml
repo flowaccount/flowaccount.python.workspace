@@ -1,4 +1,4 @@
-service: etl-open-platform-status
+service: etl-dynamodb
 
 frameworkVersion: '3'
 
@@ -10,10 +10,10 @@ provider:
     - arn:aws:lambda:ap-southeast-1:697698820969:layer:aws-data-wrangler-layer-py3-8:1
 
 functions:
-  extract:
+  extract-open-platform:
     handler: handlers/extract_open_platform.handle
   
-  clean:
+  clean-open-platform:
     handler: handlers/clean_open_platform.handle
     events:
       - s3:
@@ -24,7 +24,7 @@ functions:
             - suffix: .json
           existing: true
   
-  load:
+  load-open-platform:
     handler: handlers/load_open_platform.handle
     events:
       - s3:
