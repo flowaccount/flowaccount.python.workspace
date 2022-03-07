@@ -191,7 +191,7 @@ def handle(event, context):
         df=summary_df,
         path=f"s3://{clean_bucket}/dynamodb/exports/summary",
         dataset=True,
-        partition_cols=["year", "month"],
+        partition_cols=["table", "year", "month"],
         database=clean_catalog,
         table="dynamodb_export_manifest_summary",
     )
