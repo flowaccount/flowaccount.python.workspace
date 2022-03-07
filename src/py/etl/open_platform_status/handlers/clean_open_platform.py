@@ -161,14 +161,17 @@ def handle(event, context):
     manifest_summary, manifest_files = get_manifest_from_event(bucket, summary_key)
 
     # Clean manifest summary
+    print("Clean manifest summary")
     summary_df = clean_manifest_summary(manifest_summary)
 
     # Common attributes
     export_id = summary_df["export_id"][0]
+    table = summary_df["table_arn"][0].rsplit("/")[1]
     year = summary_df["year"][0]
     month = summary_df["month"][0]
 
     # Clean manifest files
+    print("Clean manifest files")
     files_df = clean_manifest_files(manifest_files)
     files_df["export_id"] = export_id
     files_df["bucket"] = bucket
@@ -176,6 +179,7 @@ def handle(event, context):
     files_df["month"] = month
 
     # Clean exported open platform table
+    print("Clean table")
     table_df = clean_exported_files(files_df)
     table_df["export_id"] = export_id
     table_df["year"] = year
@@ -187,7 +191,8 @@ def handle(event, context):
         wr.catalog.create_database(clean_catalog)
 
     # Write manifest summary
-    wr.s3.to_parquet(
+    print(f"Write cleaned manifest summary: {export_id}")
+    cleaned_s3_summary = wr.s3.to_parquet(
         df=summary_df,
         path=f"s3://{clean_bucket}/dynamodb/exports/summary",
         dataset=True,
@@ -197,7 +202,8 @@ def handle(event, context):
     )
 
     # Write manifest files
-    wr.s3.to_parquet(
+    print("Write cleaned manifest files")
+    cleaned_s3_files = wr.s3.to_parquet(
         df=files_df,
         path=f"s3://{clean_bucket}/dynamodb/exports/files",
         dataset=True,
@@ -207,8 +213,8 @@ def handle(event, context):
     )
 
     # Write table records
-    table = summary_df["table_arn"][0].rsplit("/")[1]
-    wr.s3.to_parquet(
+    print(f"Write cleaned table: {table}")
+    cleaned_s3_table = wr.s3.to_parquet(
         df=table_df,
         path=f"s3://{clean_bucket}/dynamodb/tables/{table}",
         dataset=True,
@@ -217,4 +223,11 @@ def handle(event, context):
         table=f"dynamodb_{table}",
     )
 
-    return {"statusCode": 200}
+    return {
+        "statusCode": 200,
+        "results": {
+            "manifest_summary": cleaned_s3_summary["paths"],
+            "manifest_files": cleaned_s3_files["paths"],
+            "table": cleaned_s3_table["paths"],
+        },
+    }
