@@ -37,24 +37,7 @@ def get_manifest_from_event(
 
 def clean_manifest_summary(manifest_summary: dict) -> pd.DataFrame:
     df = pd.DataFrame([manifest_summary])
-    df = df.rename(
-        columns={
-            "version": "version",
-            "exportArn": "export_arn",
-            "startTime": "start_time",
-            "endTime": "end_time",
-            "tableArn": "table_arn",
-            "exportTime": "export_time",
-            "s3Bucket": "s3_bucket",
-            "s3Prefix": "s3_prefix",
-            "s3SseAlgorithm": "s3_sse_algorithm",
-            "s3SseKmsKeyId": "s3_sse_kms_key_id",
-            "manifestFilesS3Key": "manifest_files_s3_key",
-            "billedSizeBytes": "billed_size_bytes",
-            "itemCount": "item_count",
-            "outputFormat": "output_format",
-        }
-    )
+    df = df.rename(columns=format_snake_case)
     df = df.astype(
         {
             "version": "string",
@@ -90,14 +73,7 @@ def clean_manifest_files(
     manifiest_files: List[dict], export_id: str, year: int, month: int
 ) -> pd.DataFrame:
     df = pd.DataFrame(manifiest_files)
-    df = df.rename(
-        columns={
-            "itemCount": "item_count",
-            "md5Checksum": "md5_checksum",
-            "etag": "etag",
-            "dataFileS3Key": "data_file_s3_key",
-        }
-    )
+    df = df.rename(columns=format_snake_case)
     df = df.astype(
         {
             "item_count": "int",
