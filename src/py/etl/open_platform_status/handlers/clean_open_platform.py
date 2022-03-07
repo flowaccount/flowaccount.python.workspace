@@ -57,6 +57,7 @@ def clean_manifest_summary(manifest_summary: dict) -> pd.DataFrame:
     df["month"] = df["export_time"].dt.month
 
     df["export_id"] = df["export_arn"].str.rsplit(pat="/", n=1, expand=True)[1]
+    df["table"] = df["table_arn"].str.rsplit(pat="/", n=1, expand=True)[1]
 
     return df
 
