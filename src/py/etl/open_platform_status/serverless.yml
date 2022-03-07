@@ -2,6 +2,14 @@ service: etl-dynamodb
 
 frameworkVersion: '3'
 
+plugins:
+  - serverless-package-external
+
+custom:
+  packageExternal:
+    external:
+      - '../../flowaccount'
+
 provider:
   name: aws
   runtime: python3.8
