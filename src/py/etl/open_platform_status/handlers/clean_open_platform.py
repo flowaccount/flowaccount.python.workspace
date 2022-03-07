@@ -61,9 +61,7 @@ def clean_manifest_summary(manifest_summary: dict) -> pd.DataFrame:
     return df
 
 
-def clean_manifest_files(
-    manifiest_files: List[dict], export_id: str, year: int, month: int
-) -> pd.DataFrame:
+def clean_manifest_files(manifiest_files: List[dict]) -> pd.DataFrame:
     df = pd.DataFrame(manifiest_files)
     df = df.rename(columns=format_snake_case)
     df = df.astype(
@@ -75,16 +73,10 @@ def clean_manifest_files(
         }
     )
 
-    df["export_id"] = export_id
-    df["year"] = year
-    df["month"] = month
-
     return df
 
 
-def clean_files(
-    files_df: pd.DataFrame, export_id: str, bucket: str, year: int, month: int
-) -> pd.DataFrame:
+def clean_exported_files(files_df: pd.DataFrame) -> pd.DataFrame:
     def format_column_name(col: str) -> str:
         name = col.rsplit(".", maxsplit=1)[0]
         return format_snake_case(name)
@@ -97,7 +89,7 @@ def clean_files(
             input_serialization_params={"Type": "Document"},
             compression="gzip",
         )
-        for key in files_df["data_file_s3_key"]
+        for bucket, key in zip(files_df["bucket"], files_df["data_file_s3_key"])
     ]
 
     df = pd.concat(df_list)
@@ -149,10 +141,6 @@ def clean_files(
     # records['expires_in'] = pd.to_timedelta(records['expires_in'], unit='s')
     # records['refresh_expires_in'] = pd.to_timedelta(records['refresh_expires_in'], unit='s')
 
-    df["export_id"] = export_id
-    df["year"] = year
-    df["month"] = month
-
     return df
 
 
@@ -174,14 +162,23 @@ def handle(event, context):
     # Clean manifest summary
     summary_df = clean_manifest_summary(manifest_summary)
 
-    # Clean manifest files
+    # Common attributes
     export_id = summary_df["export_id"][0]
     year = summary_df["year"][0]
     month = summary_df["month"][0]
-    files_df = clean_manifest_files(manifest_files, export_id, year, month)
+
+    # Clean manifest files
+    files_df = clean_manifest_files(manifest_files)
+    files_df["export_id"] = export_id
+    files_df["bucket"] = bucket
+    files_df["year"] = year
+    files_df["month"] = month
 
     # Clean exported open platform table
-    table_df = clean_files(files_df, export_id, bucket, year, month)
+    table_df = clean_exported_files(files_df)
+    table_df["export_id"] = export_id
+    table_df["year"] = year
+    table_df["month"] = month
 
     # Create Glue database catalog if not exists
     databases = wr.catalog.databases()
