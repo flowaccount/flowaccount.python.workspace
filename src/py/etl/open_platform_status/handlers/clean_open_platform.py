@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 import awswrangler as wr
 import boto3
 import pandas as pd
-from utils import format_snake_case
+from flowaccount.utils import format_snake_case
 
 s3 = boto3.client("s3")
 clean_bucket = "pipat-clean-bucket"
