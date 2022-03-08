@@ -1,7 +1,5 @@
 import awswrangler as wr
-import boto3
 
-s3 = boto3.client("s3")
 clean_bucket = "pipat-clean-bucket"
 table_key = "dynamodb/tables/flowaccount-open-platform-company-user-v2"
 secret_id = "arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl-redshift-lxoxVP"
