@@ -24,8 +24,8 @@ def format_time_key(time_obj: time) -> int:
 def get_export_datetime(database: str, table: str, export_id: str) -> Tuple[date, time]:
     summary_df = wr.s3.read_parquet_table(database, table)
     summary_df = summary_df[summary_df["export_id"] == export_id]
-    export_date = summary_df["export_time"].dt.date[0]
-    export_time = summary_df["export_time"].dt.time[0]
+    export_date = summary_df["export_time"].dt.date.iloc[0]
+    export_time = summary_df["export_time"].dt.time.iloc[0]
     return export_date, export_time
 
 
