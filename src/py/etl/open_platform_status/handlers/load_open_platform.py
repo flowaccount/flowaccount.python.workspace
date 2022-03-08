@@ -17,8 +17,8 @@ def format_date_key(date_obj: date) -> int:
 
 
 def format_time_key(time_obj: time) -> int:
-    hour, min, second = time_obj.hour, time_obj.min, time_obj.second
-    return int(f"{hour}{min:02}{second:02}")
+    hour, minute, second = time_obj.hour, time_obj.minute, time_obj.second
+    return int(f"{hour}{minute:02}{second:02}")
 
 
 def get_export_datetime(database: str, table: str, export_id: str) -> Tuple[date, time]:
