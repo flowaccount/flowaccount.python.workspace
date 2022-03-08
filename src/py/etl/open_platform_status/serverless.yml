@@ -10,6 +10,14 @@ custom:
     external:
       - '../../flowaccount'
 
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!__pycache__/**'
+    - '!.pytest_cache/**'
+    - '!BUILD'
+    - '!**/BUILD'
+
 provider:
   name: aws
   runtime: python3.8
