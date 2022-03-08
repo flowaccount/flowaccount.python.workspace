@@ -30,14 +30,15 @@ def handle(event, context):
         new_company_df = new_company_df.rename(columns={"company_id": "dynamodb_key"})
 
         # Write new companies to RedShift
-        wr.redshift.to_sql(
-            df=new_company_df,
-            table="dim_company",
-            schema="etl",
-            con=conn,
-            mode="append",
-            use_column_names=True,
-        )
+        if not new_company_df.empty:
+            wr.redshift.to_sql(
+                df=new_company_df,
+                table="dim_company",
+                schema="etl",
+                con=conn,
+                mode="append",
+                use_column_names=True,
+            )
 
     response = {
         "statusCode": 200,
