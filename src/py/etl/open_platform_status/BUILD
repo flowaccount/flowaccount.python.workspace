@@ -21,6 +21,7 @@ python_awslambda(
     runtime="python3.8",
     handler="handlers/load_company:handle",
     description="Load new companies into RedShift",
+    dependencies=["3rdparty/py:awswrangler"],
 )
 
 python_awslambda(
