@@ -29,4 +29,5 @@ python_awslambda(
     runtime="python3.8",
     handler="handlers/load_open_platform:handle",
     description="Load cleaned data into RedShift",
+    dependencies=["3rdparty/py:awswrangler"],
 )
