@@ -17,6 +17,13 @@ python_awslambda(
 )
 
 python_awslambda(
+    name="load-company",
+    runtime="python3.8",
+    handler="handlers/load_company:handle",
+    description="Load new companies into RedShift",
+)
+
+python_awslambda(
     name="load-open-platform",
     runtime="python3.8",
     handler="handlers/load_open_platform:handle",
