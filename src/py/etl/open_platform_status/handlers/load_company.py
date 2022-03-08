@@ -1,45 +1,72 @@
 import awswrangler as wr
+import pandas as pd
+from redshift_connector import Connection as RedShiftConnection
 
 clean_bucket = "pipat-clean-bucket"
 table_key = "dynamodb/tables/flowaccount-open-platform-company-user-v2"
 secret_id = "arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl-redshift-lxoxVP"
+schema = "etl"
+
+
+def get_company_from_s3(s3_key: str, export_id: str):
+    s3_df = wr.s3.read_parquet(s3_key, dataset=True)
+    s3_df = s3_df[s3_df["export_id"] == export_id]
+    s3_df = s3_df[["company_id"]].drop_duplicates()
+    return s3_df
+
+
+def get_company_from_redshift(schema: str, conn: RedShiftConnection):
+    redshift_df = wr.redshift.read_sql_query(
+        f"SELECT dynamodb_key FROM {schema}.dim_company", con=conn
+    )
+    return redshift_df
+
+
+def get_new_company(redshift_df: pd.DataFrame, s3_df: pd.DataFrame):
+    """Find new companies in s3_df which are not in redshift_df."""
+
+    # Discover new companies by find companies export table only has
+    new_company_df = redshift_df.merge(
+        s3_df, how="right", left_on="dynamodb_key", right_on="company_id"
+    )
+    new_company_df = new_company_df[new_company_df["dynamodb_key"].isna()]
+
+    # Transform the DataFrame for insertion
+    new_company_df = new_company_df[["company_id"]]
+    new_company_df = new_company_df.rename(columns={"company_id": "dynamodb_key"})
+
+    return new_company_df
+
+
+def load_company(company_df: pd.DataFrame, schema: str, conn: RedShiftConnection):
+    """Append RedShift company dimension with company_df."""
+
+    wr.redshift.to_sql(
+        df=company_df,
+        table="dim_company",
+        schema=schema,
+        con=conn,
+        mode="append",
+        use_column_names=True,
+    )
 
 
 def handle(event, context):
     export_id = event["export_id"]
 
     # Get company ids from the export
-    table_df = wr.s3.read_parquet(f"s3://{clean_bucket}/{table_key}", dataset=True)
-    table_df = table_df[table_df["export_id"] == export_id]
-    table_df = table_df[["company_id"]].drop_duplicates()
+    s3_df = get_company_from_s3(f"s3://{clean_bucket}/{table_key}", export_id)
 
     with wr.redshift.connect(secret_id=secret_id, dbname="test") as conn:
-        # Select
-        redshift_df = wr.redshift.read_sql_query(
-            "SELECT dynamodb_key FROM etl.dim_company", con=conn
-        )
+        # Get DynamoDB company ids from RedShift
+        redshift_df = get_company_from_redshift(schema, conn)
 
-        # Discover new companies by find companies export table only has
-        new_company_df = redshift_df.merge(
-            table_df, how="right", left_on="dynamodb_key", right_on="company_id"
-        )
-        new_company_df = new_company_df[new_company_df["dynamodb_key"].isna()]
-
-        # Transform the DataFrame for insertion
-        new_company_df = new_company_df[["company_id"]]
-        new_company_df = new_company_df.rename(columns={"company_id": "dynamodb_key"})
+        # Get new companies not in RedShift
+        new_company_df = get_new_company(redshift_df, s3_df)
 
         # Write new companies to RedShift
         if not new_company_df.empty:
-            wr.redshift.to_sql(
-                df=new_company_df,
-                table="dim_company",
-                schema="etl",
-                con=conn,
-                mode="append",
-                use_column_names=True,
-            )
-
+            load_company(new_company_df, schema, conn)
             response = {
                 "statusCode": 200,
                 "body": {
