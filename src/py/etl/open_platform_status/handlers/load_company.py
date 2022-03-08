@@ -1,5 +1,3 @@
-import json
-
 import awswrangler as wr
 import boto3
 
