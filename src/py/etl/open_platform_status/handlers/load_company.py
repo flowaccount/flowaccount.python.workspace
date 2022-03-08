@@ -40,12 +40,20 @@ def handle(event, context):
                 use_column_names=True,
             )
 
-    response = {
-        "statusCode": 200,
-        "body": {
-            "message": "Updated RedShift dim_company",
-            "dynamodbExportId": export_id,
-        },
-    }
+            response = {
+                "statusCode": 200,
+                "body": {
+                    "message": "Updated RedShift dim_company",
+                    "dynamodbExportId": export_id,
+                },
+            }
+        else:
+            response = {
+                "statusCode": 200,
+                "body": {
+                    "message": "No update to RedShift dim_company",
+                    "dynamodbExportId": export_id,
+                },
+            }
 
     return response
