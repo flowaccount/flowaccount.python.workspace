@@ -14,11 +14,16 @@ def handle(event, context):
 
     table_name = event["table"]
     table_arn = f"{dynamodb_arn}:{table_name}"
+    
     if "export_time" in event:
         export_time = datetime.fromisoformat(event["export_time"])
     else:
         export_time = datetime.now()
-    client_token = str(uuid.uuid4())
+    
+    if "client_token" in event:
+        client_token = event["client_token"]
+    else:
+        client_token = None
 
     result = client.export_table_to_point_in_time(
         TableArn=table_arn,
