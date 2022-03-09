@@ -60,7 +60,11 @@ def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.Data
                     ) AS row_num
                 FROM {schema}.fact_open_platform_connection
             )
-            SELECT company_key, dynamodb_key, platform, status
+            SELECT
+                f.company_key AS company_key,
+                c.dynamodb_key AS dynamodb_key,
+                f.platform AS platform,
+                f.status AS status
             FROM cte_1 AS f
             JOIN {schema}.dim_company AS c ON c.company_key = f.company_key
             WHERE row_num = 1
