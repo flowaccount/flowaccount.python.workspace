@@ -7,7 +7,7 @@ import pandas as pd
 import pandas.testing as pdtest
 from etl.open_platform_status.handlers.load_open_platform import (
     format_date_key, format_time_key, get_connected, get_disconnected,
-    get_export_datetime)
+    get_export_datetime, get_open_platform_from_s3)
 
 
 class LoadOpenPlatformTestCase(TestCase):
@@ -46,6 +46,31 @@ class LoadOpenPlatformTestCase(TestCase):
             mock_method.assert_called_once_with(database, table)
             self.assertEqual(res_date, expected_date)
             self.assertEqual(res_time, expected_time)
+
+    def test_get_open_platform_from_s3(self):
+        s3_key = "s3://test-bucket/path/to/dataset"
+        export_id = "1234-567a"
+        dataset_df = pd.DataFrame(
+            {
+                "export_id": ["9999-9999", "1234-567a"],
+                "company_id": [1, 5],
+                "platform_name": ["Shopee", "Lazada"],
+            }
+        )
+        expected = pd.DataFrame(
+            {
+                "company_id": [5],
+                "platform_name": ["Lazada"],
+            }
+        ).astype({"company_id": "int", "platform_name": "category"})
+
+        with patch.object(
+            wr.s3, "read_parquet", return_value=dataset_df
+        ) as mock_method:
+            result = get_open_platform_from_s3(s3_key, export_id)
+            mock_method.assert_called_once_with(s3_key, dataset=True)
+
+        pdtest.assert_frame_equal(result, expected)
 
     def test_get_disconnected(self):
         fact_df = pd.DataFrame(
