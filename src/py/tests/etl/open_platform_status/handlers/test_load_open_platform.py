@@ -6,7 +6,8 @@ import awswrangler as wr
 import pandas as pd
 import pandas.testing as pdtest
 from etl.open_platform_status.handlers.load_open_platform import (
-    format_date_key, format_time_key, get_connected, get_disconnected, get_export_datetime)
+    format_date_key, format_time_key, get_connected, get_disconnected,
+    get_export_datetime)
 
 
 class LoadOpenPlatformTestCase(TestCase):
@@ -50,9 +51,7 @@ class LoadOpenPlatformTestCase(TestCase):
         fact_df = pd.DataFrame(
             {"company_key": ["Kompanie"], "platform": ["Lazada"], "status": [True]}
         )
-        incoming_df = pd.DataFrame(
-            {"company_key": [], "platform_name": []}
-        )
+        incoming_df = pd.DataFrame({"company_key": [], "platform_name": []})
         expected = pd.DataFrame(
             {
                 "company_key": ["Kompanie"],
@@ -67,7 +66,7 @@ class LoadOpenPlatformTestCase(TestCase):
             {
                 "company_key": ["Kompanie", "Kompanie"],
                 "platform": ["Lazada", "Shopee"],
-                "status": [True, False]
+                "status": [True, False],
             }
         )
         incoming_df = pd.DataFrame(
