@@ -34,7 +34,7 @@ def get_open_platform_from_s3(s3_key: str, export_id: str) -> pd.DataFrame:
     s3_df = s3_df[s3_df["export_id"] == export_id]
     s3_df = s3_df[["company_id", "platform_name"]]
     s3_df["platform_name"] = s3_df["platform_name"].astype("category")
-    return s3_df
+    return s3_df.reset_index(drop=True)
 
 
 def get_company_from_redshift(schema: str, conn: RedShiftConnection) -> pd.DataFrame:
