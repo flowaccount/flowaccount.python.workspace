@@ -27,6 +27,10 @@ provider:
     - arn:aws:lambda:ap-southeast-1:697698820969:layer:aws-data-wrangler-layer-py3-8:1
 
 functions:
+  export-table:
+    handler: handlers/export_table.handle
+    description: Export DynamoDB to S3
+
   extract-open-platform:
     handler: handlers/extract_open_platform.handle
   

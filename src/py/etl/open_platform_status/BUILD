@@ -1,6 +1,13 @@
 python_sources(name="lib")
 
 python_awslambda(
+    name="export-table",
+    runtime="python3.8",
+    handler="handlers/export_table:handle",
+    description="Export DynamoDB to S3",
+)
+
+python_awslambda(
     name="extract-open-platform",
     runtime="python3.8",
     handler="handlers/extract_open_platform:handle",
