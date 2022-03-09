@@ -5,6 +5,7 @@ python_awslambda(
     runtime="python3.8",
     handler="handlers/export_table:handle",
     description="Export DynamoDB to S3",
+    dependencies=["3rdparty/py:boto3"],
 )
 
 python_awslambda(
