@@ -75,12 +75,12 @@ def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.Data
     return redshift_df
 
 
-def get_disconnected(fact_df: pd.DataFrame, s3_df: pd.DataFrame) -> pd.DataFrame:
+def get_disconnected(fact_df: pd.DataFrame, incoming_df: pd.DataFrame) -> pd.DataFrame:
     """Get disconnected (company, platform) pairs by finding pairs which exist
     only in RedShift."""
 
-    df = fact_df.merge(s3_df, how="left", left_on="dynamodb_key", right_on="company_id")
-    df = df.dropna(subset=["company_id"])
+    df = fact_df.join(incoming_df, how="left", on="company_key", rsuffix=".incoming")
+    df = df[df["company_key.incoming"].isna()]
     df = df[["company_key", "platform"]]
 
     return df
