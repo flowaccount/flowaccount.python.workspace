@@ -74,7 +74,7 @@ def clean_manifest_files(manifiest_files: List[dict]) -> pd.DataFrame:
     return df
 
 
-def clean_exported_files(files_df: pd.DataFrame) -> pd.DataFrame:
+def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
     def format_column_name(col: str) -> str:
         name = col.rsplit(".", maxsplit=1)[0]
         return format_snake_case(name)
@@ -87,7 +87,7 @@ def clean_exported_files(files_df: pd.DataFrame) -> pd.DataFrame:
             input_serialization_params={"Type": "Document"},
             compression="gzip",
         )
-        for bucket, key in zip(files_df["bucket"], files_df["data_file_s3_key"])
+        for key in files_df["data_file_s3_key"]
     ]
 
     df = pd.concat(df_list)
@@ -172,7 +172,7 @@ def handle(event, context):
 
     # Clean exported open platform table
     print("Clean table")
-    table_df = clean_exported_files(files_df)
+    table_df = clean_exported_files(bucket, files_df)
     table_df["export_id"] = export_id
 
     # Create Glue database catalog if not exists
@@ -184,27 +184,21 @@ def handle(event, context):
     print(f"Write cleaned manifest summary: {export_id}")
     cleaned_s3_summary = wr.s3.to_parquet(
         df=summary_df,
-        path=f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet",
-        database=clean_catalog,
-        table="dynamodb_manifest_summary",
+        path=f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet"
     )
 
     # Write manifest files
     print("Write cleaned manifest files")
     cleaned_s3_files = wr.s3.to_parquet(
         df=files_df,
-        path=f"s3://{clean_bucket}/dynamodb/manifest/files/{export_id}.parquet",
-        database=clean_catalog,
-        table="dynamodb_manifest_files",
+        path=f"s3://{clean_bucket}/dynamodb/manifest/files/{export_id}.parquet"
     )
 
     # Write table records
     print(f"Write cleaned table: {table}")
     cleaned_s3_table = wr.s3.to_parquet(
         df=table_df,
-        path=f"s3://{clean_bucket}/dynamodb/tables/{table}/{export_id}.parquet",
-        database=clean_catalog,
-        table=f"dynamodb_{table}",
+        path=f"s3://{clean_bucket}/dynamodb/tables/{table}/{export_id}.parquet"
     )
 
     return {
