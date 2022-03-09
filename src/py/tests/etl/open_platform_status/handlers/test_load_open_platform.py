@@ -24,37 +24,33 @@ class LoadOpenPlatformTestCase(TestCase):
         self.assertEqual(result, expected)
 
     def test_get_export_datetime(self):
-        database = "foo"
-        table = "bar"
         export_id = "1234-567a"
+        s3_key = f"s3://test-bucket/path/to/summary/{export_id}.parquet"
         summary_df = pd.DataFrame(
             data={
-                "export_time": [
-                    datetime(2022, 3, 7, 18, 45, 38),
-                    datetime(2022, 3, 8, 9, 5, 8),
-                ],
-                "export_id": ["9999-9999", "1234-567a"],
+                "export_time": [datetime(2022, 3, 8, 9, 5, 8)],
+                "export_id": ["1234-567a"],
             }
         )
         expected_date = date(2022, 3, 8)
         expected_time = time(9, 5, 8)
 
         with patch.object(
-            wr.s3, "read_parquet_table", return_value=summary_df
+            wr.s3, "read_parquet", return_value=summary_df
         ) as mock_method:
-            res_date, res_time = get_export_datetime(database, table, export_id)
-            mock_method.assert_called_once_with(database, table)
+            res_date, res_time = get_export_datetime(s3_key)
+            mock_method.assert_called_once_with(s3_key)
             self.assertEqual(res_date, expected_date)
             self.assertEqual(res_time, expected_time)
 
     def test_get_open_platform_from_s3(self):
-        s3_key = "s3://test-bucket/path/to/dataset"
         export_id = "1234-567a"
+        s3_key = f"s3://test-bucket/path/to/open_platform/{export_id}.parquet"
         dataset_df = pd.DataFrame(
             {
-                "export_id": ["9999-9999", "1234-567a"],
-                "company_id": [1, 5],
-                "platform_name": ["Shopee", "Lazada"],
+                "export_id": ["1234-567a"],
+                "company_id": [5],
+                "platform_name": ["Lazada"],
             }
         )
         expected = pd.DataFrame(
@@ -67,8 +63,8 @@ class LoadOpenPlatformTestCase(TestCase):
         with patch.object(
             wr.s3, "read_parquet", return_value=dataset_df
         ) as mock_method:
-            result = get_open_platform_from_s3(s3_key, export_id)
-            mock_method.assert_called_once_with(s3_key, dataset=True)
+            result = get_open_platform_from_s3(s3_key)
+            mock_method.assert_called_once_with(s3_key)
 
         pdtest.assert_frame_equal(result, expected)
 

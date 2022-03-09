@@ -21,17 +21,15 @@ def format_time_key(time_obj: time) -> int:
     return int(f"{hour}{minute:02}{second:02}")
 
 
-def get_export_datetime(database: str, table: str, export_id: str) -> Tuple[date, time]:
-    summary_df = wr.s3.read_parquet_table(database, table)
-    summary_df = summary_df[summary_df["export_id"] == export_id]
+def get_export_datetime(s3_key: str) -> Tuple[date, time]:
+    summary_df = wr.s3.read_parquet(s3_key)
     export_date = summary_df["export_time"].dt.date.iloc[0]
     export_time = summary_df["export_time"].dt.time.iloc[0]
     return export_date, export_time
 
 
-def get_open_platform_from_s3(s3_key: str, export_id: str) -> pd.DataFrame:
-    s3_df = wr.s3.read_parquet(s3_key, dataset=True)
-    s3_df = s3_df[s3_df["export_id"] == export_id]
+def get_open_platform_from_s3(s3_key: str) -> pd.DataFrame:
+    s3_df = wr.s3.read_parquet(s3_key)
     s3_df = s3_df[["company_id", "platform_name"]]
     s3_df["platform_name"] = s3_df["platform_name"].astype("category")
     return s3_df.reset_index(drop=True)
@@ -99,13 +97,13 @@ def handle(event, context):
     export_id = event["export_id"]
 
     export_date, export_time = get_export_datetime(
-        "clean", "dynamodb_export_manifest_summary", export_id
+        f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet"
     )
     date_key = format_date_key(export_date)
     time_key = format_time_key(export_time)
 
     s3_platform_df = get_open_platform_from_s3(
-        f"s3://{clean_bucket}/{table_key}", export_id
+        f"s3://{clean_bucket}/{table_key}/{export_id}.parquet"
     )
 
     with wr.redshift.connect(secret_id=secret_id, dbname="test") as conn:

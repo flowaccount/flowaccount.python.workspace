@@ -53,9 +53,6 @@ def clean_manifest_summary(manifest_summary: dict) -> pd.DataFrame:
     for col in ["start_time", "end_time", "export_time"]:
         df[col] = pd.to_datetime(df[col])
 
-    df["year"] = df["export_time"].dt.year
-    df["month"] = df["export_time"].dt.month
-
     df["export_id"] = df["export_arn"].str.rsplit(pat="/", n=1, expand=True)[1]
     df["table"] = df["table_arn"].str.rsplit(pat="/", n=1, expand=True)[1]
 
@@ -167,23 +164,16 @@ def handle(event, context):
     # Common attributes
     export_id = summary_df["export_id"][0]
     table = summary_df["table_arn"][0].rsplit("/")[1]
-    year = summary_df["year"][0]
-    month = summary_df["month"][0]
 
     # Clean manifest files
     print("Clean manifest files")
     files_df = clean_manifest_files(manifest_files)
     files_df["export_id"] = export_id
-    files_df["bucket"] = bucket
-    files_df["year"] = year
-    files_df["month"] = month
 
     # Clean exported open platform table
     print("Clean table")
     table_df = clean_exported_files(files_df)
     table_df["export_id"] = export_id
-    table_df["year"] = year
-    table_df["month"] = month
 
     # Create Glue database catalog if not exists
     databases = wr.catalog.databases()
@@ -194,31 +184,25 @@ def handle(event, context):
     print(f"Write cleaned manifest summary: {export_id}")
     cleaned_s3_summary = wr.s3.to_parquet(
         df=summary_df,
-        path=f"s3://{clean_bucket}/dynamodb/exports/summary",
-        dataset=True,
-        partition_cols=["table", "year", "month"],
+        path=f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet",
         database=clean_catalog,
-        table="dynamodb_export_manifest_summary",
+        table="dynamodb_manifest_summary",
     )
 
     # Write manifest files
     print("Write cleaned manifest files")
     cleaned_s3_files = wr.s3.to_parquet(
         df=files_df,
-        path=f"s3://{clean_bucket}/dynamodb/exports/files",
-        dataset=True,
-        partition_cols=["year", "month"],
+        path=f"s3://{clean_bucket}/dynamodb/manifest/files/{export_id}.parquet",
         database=clean_catalog,
-        table="dynamodb_export_manifest_files",
+        table="dynamodb_manifest_files",
     )
 
     # Write table records
     print(f"Write cleaned table: {table}")
     cleaned_s3_table = wr.s3.to_parquet(
         df=table_df,
-        path=f"s3://{clean_bucket}/dynamodb/tables/{table}",
-        dataset=True,
-        partition_cols=["year", "month"],
+        path=f"s3://{clean_bucket}/dynamodb/tables/{table}/{export_id}.parquet",
         database=clean_catalog,
         table=f"dynamodb_{table}",
     )

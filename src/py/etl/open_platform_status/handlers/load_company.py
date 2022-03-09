@@ -8,9 +8,8 @@ secret_id = "arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl
 schema = "etl"
 
 
-def get_company_from_s3(s3_key: str, export_id: str):
-    s3_df = wr.s3.read_parquet(s3_key, dataset=True)
-    s3_df = s3_df[s3_df["export_id"] == export_id]
+def get_company_from_s3(s3_key: str):
+    s3_df = wr.s3.read_parquet(s3_key)
     s3_df = s3_df[["company_id"]].drop_duplicates()
     return s3_df
 
@@ -55,7 +54,7 @@ def handle(event, context):
     export_id = event["export_id"]
 
     # Get company ids from the export
-    s3_df = get_company_from_s3(f"s3://{clean_bucket}/{table_key}", export_id)
+    s3_df = get_company_from_s3(f"s3://{clean_bucket}/{table_key}/{export_id}.parquet")
 
     with wr.redshift.connect(secret_id=secret_id, dbname="test") as conn:
         # Get DynamoDB company ids from RedShift
