@@ -4,8 +4,9 @@ from unittest.mock import patch
 
 import awswrangler as wr
 import pandas as pd
+import pandas.testing as pdtest
 from etl.open_platform_status.handlers.load_open_platform import (
-    format_date_key, format_time_key, get_export_datetime)
+    format_date_key, format_time_key, get_disconnected, get_export_datetime)
 
 
 class LoadOpenPlatformTestCase(TestCase):
@@ -44,3 +45,19 @@ class LoadOpenPlatformTestCase(TestCase):
             mock_method.assert_called_once_with(database, table)
             self.assertEqual(res_date, expected_date)
             self.assertEqual(res_time, expected_time)
+
+    def test_get_disconnected(self):
+        fact_df = pd.DataFrame(
+            {"company_key": ["Kompanie"], "platform": ["Lazada"], "status": [True]}
+        )
+        incoming_df = pd.DataFrame(
+            {"company_key": [], "platform_name": [], "status": []}
+        )
+        expected = pd.DataFrame(
+            {
+                "company_key": ["Kompanie"],
+                "platform": ["Lazada"],
+            }
+        )
+        result = get_disconnected(fact_df, incoming_df)
+        pdtest.assert_frame_equal(result, expected, f"{result.head()}")
