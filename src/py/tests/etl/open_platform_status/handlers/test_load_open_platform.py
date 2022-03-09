@@ -6,7 +6,7 @@ import awswrangler as wr
 import pandas as pd
 import pandas.testing as pdtest
 from etl.open_platform_status.handlers.load_open_platform import (
-    format_date_key, format_time_key, get_disconnected, get_export_datetime)
+    format_date_key, format_time_key, get_connected, get_disconnected, get_export_datetime)
 
 
 class LoadOpenPlatformTestCase(TestCase):
@@ -51,7 +51,7 @@ class LoadOpenPlatformTestCase(TestCase):
             {"company_key": ["Kompanie"], "platform": ["Lazada"], "status": [True]}
         )
         incoming_df = pd.DataFrame(
-            {"company_key": [], "platform_name": [], "status": []}
+            {"company_key": [], "platform_name": []}
         )
         expected = pd.DataFrame(
             {
@@ -60,4 +60,28 @@ class LoadOpenPlatformTestCase(TestCase):
             }
         )
         result = get_disconnected(fact_df, incoming_df)
+        pdtest.assert_frame_equal(result, expected)
+
+    def test_get_connected(self):
+        fact_df = pd.DataFrame(
+            {
+                "company_key": ["Kompanie", "Kompanie"],
+                "platform": ["Lazada", "Shopee"],
+                "status": [True, False]
+            }
+        )
+        incoming_df = pd.DataFrame(
+            {
+                "company_key": ["Kompanie", "Corporate"],
+                "platform_name": ["Shopee", "K-Cash"],
+            }
+        )
+        expected = pd.DataFrame(
+            {
+                "company_key": ["Kompanie", "Corporate"],
+                "platform": ["Shopee", "K-Cash"],
+            }
+        )
+
+        result = get_connected(fact_df, incoming_df)
         pdtest.assert_frame_equal(result, expected)
