@@ -9,6 +9,14 @@ python_awslambda(
 )
 
 python_awslambda(
+    name="parse-export-manifest",
+    runtime="python3.8",
+    handler="handlers/parse_export_manifest:handle",
+    description="Parse DynamoDB export manifest",
+    dependencies=["3rdparty/py:boto3"],
+)
+
+python_awslambda(
     name="extract-open-platform",
     runtime="python3.8",
     handler="handlers/extract_open_platform:handle",

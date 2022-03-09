@@ -31,9 +31,13 @@ functions:
     handler: handlers/export_table.handle
     description: Export DynamoDB to S3
 
+  parse-export-manifest:
+    handler: handlers/parse_export_manifest.handle
+    description: Parse DynamoDB export manifest
+
   extract-open-platform:
     handler: handlers/extract_open_platform.handle
-  
+
   clean-open-platform:
     handler: handlers/clean_open_platform.handle
     role: cleanOpenPlatformRole
