@@ -86,16 +86,12 @@ def get_disconnected(fact_df: pd.DataFrame, incoming_df: pd.DataFrame) -> pd.Dat
     return df
 
 
-def get_connected(fact_df: pd.DataFrame, s3_df: pd.DataFrame) -> pd.DataFrame:
-    """Get connected (company, platform) pairs by union RedShift and S3
-    pairs."""
+def get_connected(fact_df: pd.DataFrame, incoming_df: pd.DataFrame) -> pd.DataFrame:
+    """Get connected (company, platform) pairs by using incoming pairs."""
 
-    df1 = fact_df[fact_df["status"]][["company_key", "platform"]]
-    df2 = s3_df[["company_key", "platform_name"]].rename({"platform_name": "platform"})
-
-    df = pd.concat([df1, df2])
-    df.drop_duplicates()
-
+    df = incoming_df[["company_key", "platform_name"]].rename(
+        columns={"platform_name": "platform"}
+    )
     return df
 
 
