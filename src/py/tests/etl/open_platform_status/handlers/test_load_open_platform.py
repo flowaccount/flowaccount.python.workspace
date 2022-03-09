@@ -60,4 +60,4 @@ class LoadOpenPlatformTestCase(TestCase):
             }
         )
         result = get_disconnected(fact_df, incoming_df)
-        pdtest.assert_frame_equal(result, expected, f"{result.head()}")
+        pdtest.assert_frame_equal(result, expected)
