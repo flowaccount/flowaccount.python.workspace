@@ -7,6 +7,7 @@ certifi==2021.10.8
 charset-normalizer==2.0.12
 decorator==5.1.1
 et-xmlfile==1.1.0
+hubspot-api-client==4.0.6
 idna==3.3
 jmespath==0.10.0
 jsonpath-ng==1.5.3
