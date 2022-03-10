@@ -85,6 +85,7 @@ functions:
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
       REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
+    maximumEventAge: 300
     vpc:
       securityGroupIds:
         - sg-04d1b3a38f1948e78
