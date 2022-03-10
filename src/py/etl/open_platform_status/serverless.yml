@@ -24,14 +24,14 @@ provider:
   runtime: python3.8
   region: ap-southeast-1
   layers:
-    - arn:aws:lambda:ap-southeast-1:697698820969:layer:aws-data-wrangler-layer-py3-8:1
+    - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
 
 functions:
   export-table:
     handler: handlers/export_table.handle
     description: Export DynamoDB to S3
     environment:
-      DYNAMODB_ARN: arn:aws:dynamodb:ap-southeast-1:697698820969
+      DYNAMODB_ARN: arn:aws:dynamodb:${aws:region}:${aws:accountId}
       RAW_BUCKET: pipat-raw-bucket
       S3_PREFIX: dynamodb/tables
 
@@ -65,7 +65,7 @@ functions:
     environment:
       CLEAN_BUCKET: pipat-clean-bucket
       TABLE_KEY: dynamodb/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl-redshift-lxoxVP
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
       REDSHIFT_SCHEMA: etl
     vpc:
       securityGroupIds:
@@ -81,7 +81,7 @@ functions:
     environment:
       CLEAN_BUCKET: pipat-clean-bucket
       TABLE_KEY: dynamodb/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl-redshift-lxoxVP
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
       REDSHIFT_SCHEMA: etl
     vpc:
       securityGroupIds:
@@ -115,13 +115,13 @@ resources:
                     - logs:CreateLogStream
                     - logs:CreateLogGroup
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
                 # Allow logging
                 - Effect: Allow
                   Action:
                     - logs:PutLogEvents
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
                 # Allow reading manifest from raw bucket
                 - Effect: Allow
                   Action:
@@ -163,13 +163,13 @@ resources:
                     - logs:CreateLogStream
                     - logs:CreateLogGroup
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
                 # Allow logging
                 - Effect: Allow
                   Action:
                     - logs:PutLogEvents
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
                 # Allow reading from clean bucket
                 - Effect: Allow
                   Action:
@@ -201,15 +201,15 @@ resources:
                     - redshift-data:ListTables
                     - redshift-data:DescribeTable
                   Resource:
-                    - arn:aws:redshift:ap-southeast-1:697698820969:cluster:etl-redshift-fadev-redshift-cluster
+                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
                 # Allow to retrieve secret
                 - Effect: Allow
                   Action:
                     - secretsmanager:GetSecretValue
                   Resource:
-                    - arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:*
+                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
         ManagedPolicyArns:
-          - arn:aws:iam::697698820969:policy/vpc-permission-lambda
+          - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
     loadOpenPlatformRole:
       Type: AWS::IAM::Role
       Properties:
@@ -233,13 +233,13 @@ resources:
                     - logs:CreateLogStream
                     - logs:CreateLogGroup
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
                 # Allow logging
                 - Effect: Allow
                   Action:
                     - logs:PutLogEvents
                   Resource:
-                    - "arn:aws:logs:ap-southeast-1:697698820969:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
                 # Allow reading from clean bucket
                 - Effect: Allow
                   Action:
@@ -271,12 +271,12 @@ resources:
                     - redshift-data:ListTables
                     - redshift-data:DescribeTable
                   Resource:
-                    - arn:aws:redshift:ap-southeast-1:697698820969:cluster:etl-redshift-fadev-redshift-cluster
+                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
                 # Allow to retrieve secret
                 - Effect: Allow
                   Action:
                     - secretsmanager:GetSecretValue
                   Resource:
-                    - arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:*
+                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
         ManagedPolicyArns:
-          - arn:aws:iam::697698820969:policy/vpc-permission-lambda
+          - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
