@@ -1,12 +1,13 @@
+import os
 import uuid
 from datetime import datetime
 
 import boto3
 
 client = boto3.client("dynamodb")
-dynamodb_arn = "arn:aws:dynamodb:ap-southeast-1:697698820969"
-raw_bucket = "pipat-raw-bucket"
-s3_prefix = "dynamodb/tables"
+dynamodb_arn = os.environ["DYNAMODB_ARN"]
+raw_bucket = os.environ["RAW_BUCKET"]
+s3_prefix = os.environ["S3_PREFIX"]
 
 
 def handle(event, context):

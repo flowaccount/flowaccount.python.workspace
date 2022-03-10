@@ -1,11 +1,12 @@
+import os
 import awswrangler as wr
 import pandas as pd
 from redshift_connector import Connection as RedShiftConnection
 
-clean_bucket = "pipat-clean-bucket"
-table_key = "dynamodb/tables/flowaccount-open-platform-company-user-v2"
-secret_id = "arn:aws:secretsmanager:ap-southeast-1:697698820969:secret:pipat-etl-redshift-lxoxVP"
-schema = "etl"
+clean_bucket = os.environ["CLEAN_BUCKET"]
+table_key = os.environ["TABLE_KEY"]
+secret_id = os.environ["REDSHIFT_SECRET_ARN"]
+schema = os.environ["REDSHIFT_SCHEMA"]
 
 
 def get_company_from_s3(s3_key: str):

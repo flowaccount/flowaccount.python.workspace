@@ -1,4 +1,5 @@
 import json
+import os
 import urllib.parse
 from typing import Dict, List, Tuple
 
@@ -8,8 +9,8 @@ import pandas as pd
 from flowaccount.utils import format_snake_case
 
 s3 = boto3.client("s3")
-clean_bucket = "pipat-clean-bucket"
-clean_catalog = "clean"
+clean_bucket = os.environ["CLEAN_BUCKET"]
+clean_catalog = os.environ["CLEAN_CATALOG"]
 
 
 def get_manifest_from_event(
