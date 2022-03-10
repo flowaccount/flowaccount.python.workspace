@@ -185,21 +185,21 @@ def handle(event, context):
     print(f"Write cleaned manifest summary: {export_id}")
     cleaned_s3_summary = wr.s3.to_parquet(
         df=summary_df,
-        path=f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet"
+        path=f"s3://{clean_bucket}/dynamodb/manifest/summary/{export_id}.parquet",
     )
 
     # Write manifest files
     print("Write cleaned manifest files")
     cleaned_s3_files = wr.s3.to_parquet(
         df=files_df,
-        path=f"s3://{clean_bucket}/dynamodb/manifest/files/{export_id}.parquet"
+        path=f"s3://{clean_bucket}/dynamodb/manifest/files/{export_id}.parquet",
     )
 
     # Write table records
     print(f"Write cleaned table: {table}")
     cleaned_s3_table = wr.s3.to_parquet(
         df=table_df,
-        path=f"s3://{clean_bucket}/dynamodb/tables/{table}/{export_id}.parquet"
+        path=f"s3://{clean_bucket}/dynamodb/tables/{table}/{export_id}.parquet",
     )
 
     return {

@@ -1,4 +1,5 @@
 import os
+
 import awswrangler as wr
 import pandas as pd
 from redshift_connector import Connection as RedShiftConnection
