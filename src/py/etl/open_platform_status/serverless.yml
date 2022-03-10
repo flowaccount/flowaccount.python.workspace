@@ -3,6 +3,7 @@ service: etl-dynamodb
 frameworkVersion: '3'
 
 plugins:
+  - serverless-dotenv-plugin
   - serverless-package-external
 
 custom:
