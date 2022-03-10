@@ -22,8 +22,9 @@ package:
 
 provider:
   name: aws
-  runtime: python3.8
-  region: ap-southeast-1
+  runtime: ${env:RUNTIME, python3.8}
+  stage: ${env:STAGE, dev}
+  region: ${env:AWS_REGION, ap-southeast-1}
   layers:
     - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
 
@@ -33,8 +34,8 @@ functions:
     description: Export DynamoDB to S3
     environment:
       DYNAMODB_ARN: arn:aws:dynamodb:${aws:region}:${aws:accountId}
-      RAW_BUCKET: pipat-raw-bucket
-      S3_PREFIX: dynamodb/tables
+      RAW_BUCKET: ${env:RAW_BUCKET}
+      S3_PREFIX: ${RAW_DYNAMODB_PREFIX}
 
   parse-export-manifest:
     handler: handlers/parse_export_manifest.handle
@@ -48,11 +49,11 @@ functions:
     role: cleanOpenPlatformRole
     description: Clean new export manifest summary, manifest files and records
     environment:
-      CLEAN_BUCKET: pipat-clean-bucket
-      CLEAN_CATALOG: clean
+      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
     events:
       - s3:
-          bucket: pipat-raw-bucket
+          bucket: ${env:RAW_BUCKET}
           event: s3:ObjectCreated:*
           rules:
             - prefix: dynamodb/tables/
@@ -64,10 +65,10 @@ functions:
     role: loadCompanyRole
     description: Load new companies into RedShift
     environment:
-      CLEAN_BUCKET: pipat-clean-bucket
-      TABLE_KEY: dynamodb/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
-      REDSHIFT_SCHEMA: etl
+      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
+      REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
     vpc:
       securityGroupIds:
         - sg-04d1b3a38f1948e78
@@ -80,10 +81,10 @@ functions:
     role: loadOpenPlatformRole
     description: Load open platform status into RedShift
     environment:
-      CLEAN_BUCKET: pipat-clean-bucket
-      TABLE_KEY: dynamodb/tables/flowaccount-open-platform-company-user-v2
+      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
-      REDSHIFT_SCHEMA: etl
+      REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
     vpc:
       securityGroupIds:
         - sg-04d1b3a38f1948e78
@@ -128,13 +129,13 @@ resources:
                   Action:
                     - s3:GetObject
                   Resource:
-                    - arn:aws:s3:::pipat-raw-bucket/*
+                    - arn:aws:s3:::${env:RAW_BUCKET}/*
                 # Allow writing manifest to clean bucket
                 - Effect: Allow
                   Action:
                     - s3:PutObject
                   Resource:
-                    - arn:aws:s3:::pipat-clean-bucket/*
+                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
                 # Allow all Glue actions
                 - Effect: Allow
                   Action:
@@ -176,12 +177,12 @@ resources:
                   Action:
                     - s3:ListBucket
                   Resource:
-                    - arn:aws:s3:::pipat-clean-bucket
+                    - arn:aws:s3:::${env:CLEAN_BUCKET}
                 - Effect: Allow
                   Action:
                     - s3:GetObject
                   Resource:
-                    - arn:aws:s3:::pipat-clean-bucket/*
+                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
                 # Allow all Glue actions
                 - Effect: Allow
                   Action:
@@ -246,12 +247,12 @@ resources:
                   Action:
                     - s3:ListBucket
                   Resource:
-                    - arn:aws:s3:::pipat-clean-bucket
+                    - arn:aws:s3:::${env:CLEAN_BUCKET}
                 - Effect: Allow
                   Action:
                     - s3:GetObject
                   Resource:
-                    - arn:aws:s3:::pipat-clean-bucket/*
+                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
                 # Allow all Glue actions
                 - Effect: Allow
                   Action:
