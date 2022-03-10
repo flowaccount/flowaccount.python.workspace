@@ -47,3 +47,11 @@ python_awslambda(
     description="Load cleaned data into RedShift",
     dependencies=["3rdparty/py:awswrangler"],
 )
+
+python_awslambda(
+    name="load-hubspot",
+    runtime="python3.8",
+    handler="handlers/load_hubspot:handle",
+    description="Load latest open platform status to HubSpot",
+    dependencies=["3rdparty/py:awswrangler", "3rdparty/py:hubspot-api-client"],
+)

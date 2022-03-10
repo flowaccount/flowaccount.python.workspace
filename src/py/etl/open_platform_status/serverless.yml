@@ -92,6 +92,9 @@ functions:
       subnetIds:
         - subnet-0d0242b967352e6a4
         - subnet-0dd7d193b2d2df967
+  load-hubspot:
+    handler: handlers/load_hubspot:handle
+    description: Load latest open platform status to HubSpot
 
 resources:
   Resources:
