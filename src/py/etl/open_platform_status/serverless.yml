@@ -102,6 +102,12 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_PLATFORM_SCHEMA: ${env:REDSHIFT_SCHEMA}
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
+    vpc:
+      securityGroupIds:
+        - sg-04d1b3a38f1948e78
+      subnetIds:
+        - subnet-0d0242b967352e6a4
+        - subnet-0dd7d193b2d2df967
 
 resources:
   Resources:
