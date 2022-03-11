@@ -1,16 +1,19 @@
+import base64
 import os
 
 import awswrangler as wr
+import boto3
 import hubspot as hs
 import pandas as pd
 from hubspot.crm.companies import (ApiException,
                                    BatchInputSimplePublicObjectBatchInput)
 from redshift_connector import Connection as RedShiftConnection
 
-hs_client = hs.Client.create(access_token=os.environ["HUBSPOT_ACCESS_TOKEN"])
-dbname = "test"
-platform_schema = "etl"
-hubspot_schema = "hubspot_sandbox"
+secret_id = os.environ["REDSHIFT_SECRET_ARN"]
+dbname = os.environ["REDSHIFT_DB"]
+platform_schema = os.environ["REDSHIFT_PLATFORM_SCHEMA"]
+hubspot_schema = os.environ["REDSHIFT_HUBSPOT_SCHEMA"]
+hubspot_token_arn = os.environ["HUBSPOT_ACCESS_TOKEN_ARN"]
 
 
 def get_platform_from_redshift(
@@ -96,7 +99,9 @@ def convert_open_platform_status_to_hubspot_inputs(df: pd.DataFrame):
     )
 
 
-def hubspot_batch_update_platform(agg_df: pd.DataFrame, step_size: int):
+def hubspot_batch_update_platform(
+    agg_df: pd.DataFrame, step_size: int, client: hs.Client
+):
     row_count = agg_df.shape[0]
     for cur_start in range(0, row_count, step_size):
         if cur_start + step_size <= row_count:
@@ -108,7 +113,7 @@ def hubspot_batch_update_platform(agg_df: pd.DataFrame, step_size: int):
             agg_df.iloc[cur_start:cur_end]
         )
         try:
-            api_response = hs_client.crm.companies.batch_api.update(
+            api_response = client.crm.companies.batch_api.update(
                 batch_input_simple_public_object_batch_input=inputs
             )
             print(api_response)
@@ -119,10 +124,21 @@ def hubspot_batch_update_platform(agg_df: pd.DataFrame, step_size: int):
 def handle(event, context):
     """Load latest open platform status to HubSpot."""
 
-    with wr.redshift.connect(secret_id="", dbname=dbname) as conn:
+    # Get platform status for all HubSpot companies
+    with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
         redshift_df = get_platform_from_redshift(platform_schema, hubspot_schema, conn)
-
     agg_df = aggregate_platform_by_company(redshift_df)
-    hubspot_batch_update_platform(agg_df, step_size=10)
+
+    # Retrieve HubSpot access token
+    sm_client = boto3.client("secretsmanager")
+    resp = sm_client.get_secret_value(SecretId=hubspot_token_arn)
+    if "SecretString" in resp:
+        access_token = resp["SecretString"]
+    else:
+        access_token = base64.b64decode(resp["SecretBinary"])
+
+    # Update HubSpot companies
+    hs_client = hs.Client.create(access_token=access_token)
+    hubspot_batch_update_platform(agg_df, 10, hs_client)
 
     return {"status": 200}
