@@ -9,6 +9,7 @@ from redshift_connector import Connection as RedShiftConnection
 clean_bucket = os.environ["CLEAN_BUCKET"]
 table_key = os.environ["TABLE_KEY"]
 secret_id = os.environ["REDSHIFT_SECRET_ARN"]
+dbname = os.environ["REDSHIFT_DB"]
 schema = os.environ["REDSHIFT_SCHEMA"]
 
 
@@ -111,7 +112,7 @@ def handle(event, context):
         f"s3://{clean_bucket}/{table_key}/{export_id}.parquet"
     )
 
-    with wr.redshift.connect(secret_id=secret_id, dbname="test") as conn:
+    with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
         rs_platform_df = get_platform_from_redshift(schema, conn)
 
         # Attach company dimension to S3 dataframe

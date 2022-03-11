@@ -7,6 +7,7 @@ from redshift_connector import Connection as RedShiftConnection
 clean_bucket = os.environ["CLEAN_BUCKET"]
 table_key = os.environ["TABLE_KEY"]
 secret_id = os.environ["REDSHIFT_SECRET_ARN"]
+dbname = os.environ["REDSHIFT_DB"]
 schema = os.environ["REDSHIFT_SCHEMA"]
 
 
@@ -58,7 +59,7 @@ def handle(event, context):
     # Get company ids from the export
     s3_df = get_company_from_s3(f"s3://{clean_bucket}/{table_key}/{export_id}.parquet")
 
-    with wr.redshift.connect(secret_id=secret_id, dbname="test") as conn:
+    with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
         # Get DynamoDB company ids from RedShift
         redshift_df = get_company_from_redshift(schema, conn)
 

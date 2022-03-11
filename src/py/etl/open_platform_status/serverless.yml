@@ -69,6 +69,7 @@ functions:
       CLEAN_BUCKET: ${env:CLEAN_BUCKET}
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
     vpc:
       securityGroupIds:
@@ -85,6 +86,7 @@ functions:
       CLEAN_BUCKET: ${env:CLEAN_BUCKET}
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
     maximumEventAge: 300
     vpc:
