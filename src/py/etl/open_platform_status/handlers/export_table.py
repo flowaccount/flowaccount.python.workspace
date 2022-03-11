@@ -14,7 +14,7 @@ def handle(event, context):
     """Start DynamoDB Export to S3 job."""
 
     table_name = event["table"]
-    table_arn = f"{dynamodb_arn}:{table_name}"
+    table_arn = f"{dynamodb_arn}:table/{table_name}"
 
     if "export_time" in event:
         export_time = datetime.fromisoformat(event["export_time"])
