@@ -102,6 +102,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_PLATFORM_SCHEMA: ${env:REDSHIFT_SCHEMA}
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
+    maximumEventAge: 300
     vpc:
       securityGroupIds:
         - sg-04d1b3a38f1948e78
