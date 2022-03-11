@@ -35,7 +35,7 @@ functions:
     environment:
       DYNAMODB_ARN: arn:aws:dynamodb:${aws:region}:${aws:accountId}
       RAW_BUCKET: ${env:RAW_BUCKET}
-      S3_PREFIX: ${RAW_DYNAMODB_PREFIX}
+      S3_PREFIX: ${env:RAW_DYNAMODB_PREFIX}
 
   parse-export-manifest:
     handler: handlers/parse_export_manifest.handle
