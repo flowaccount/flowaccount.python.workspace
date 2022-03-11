@@ -9,10 +9,13 @@ from redshift_connector import Connection as RedShiftConnection
 
 hs_client = hs.Client.create(access_token=os.environ["HUBSPOT_ACCESS_TOKEN"])
 dbname = "test"
-schema = "etl"
+platform_schema = "etl"
+hubspot_schema = "hubspot_sandbox"
 
 
-def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.DataFrame:
+def get_platform_from_redshift(
+    platform_schema: str, hubspot_schema: str, conn: RedShiftConnection
+) -> pd.DataFrame:
     """Get latest (company, platform) pair connection status from RedShift."""
 
     redshift_df = wr.redshift.read_sql_query(
@@ -26,7 +29,7 @@ def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.Data
                         PARTITION BY company_key, platform
                         ORDER BY date_key DESC
                     ) AS row_num
-                FROM {schema}.fact_open_platform_connection
+                FROM {platform_schema}.fact_open_platform_connection
             )
             SELECT
                 h.flowaccount_id AS flowaccount_id
@@ -34,8 +37,8 @@ def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.Data
                 f.platform AS platform,
                 f.status AS status
             FROM cte_1 AS f
-            JOIN {schema}.dim_company AS c ON c.company_key = f.company_key
-            JOIN hubspot_sandbox.company_ref AS h ON h.flowaccount_id = c.dynamodb_key
+            JOIN {platform_schema}.dim_company AS c ON c.company_key = f.company_key
+            JOIN {hubspot_schema}.company_ref AS h ON h.flowaccount_id = c.dynamodb_key
             WHERE row_num = 1
         """,
         con=conn,
@@ -117,7 +120,7 @@ def handle(event, context):
     """Load latest open platform status to HubSpot."""
 
     with wr.redshift.connect(secret_id="", dbname=dbname) as conn:
-        redshift_df = get_platform_from_redshift(schema, conn)
+        redshift_df = get_platform_from_redshift(platform_schema, hubspot_schema, conn)
 
     agg_df = aggregate_platform_by_company(redshift_df)
     hubspot_batch_update_platform(agg_df, step_size=10)
