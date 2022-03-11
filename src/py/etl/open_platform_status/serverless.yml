@@ -2,8 +2,9 @@ service: etl-dynamodb
 
 frameworkVersion: '3'
 
+useDotenv: true
+
 plugins:
-  - serverless-dotenv-plugin
   - serverless-package-external
 
 custom:
@@ -23,7 +24,7 @@ package:
 provider:
   name: aws
   runtime: ${env:RUNTIME, "python3.8"}
-  stage: ${env:STAGE, "dev"}
+  stage: ${opt:stage, "development"}
   region: ${env:AWS_REGION, "ap-southeast-1"}
   layers:
     - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
