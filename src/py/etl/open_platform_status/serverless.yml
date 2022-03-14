@@ -97,7 +97,7 @@ functions:
         - subnet-0dd7d193b2d2df967
   
   load-hubspot:
-    handler: handlers/load_hubspot:handle
+    handler: handlers/load_hubspot.handle
     role: loadHubSpotRole
     description: Load latest open platform status to HubSpot
     environment:
