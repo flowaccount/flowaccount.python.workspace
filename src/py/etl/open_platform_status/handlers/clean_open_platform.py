@@ -131,6 +131,15 @@ def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
+    # Clean platform names
+    df["platform_name"] = df["platform_name"].map({
+        "lazada": "Lazada",
+        "shopee": "Shopee",
+        # No example data in source
+        # "kcash": "K-Cash",
+        # "foodstory": "Food Story"
+    })
+
     # Convert datetime string to datetime64
     df["expired_at"] = pd.to_datetime(df["expired_at"], unit="s")
     df["created_at"] = pd.to_datetime(df["created_at"], unit="s")
