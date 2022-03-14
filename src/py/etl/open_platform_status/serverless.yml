@@ -113,6 +113,9 @@ functions:
       subnetIds:
         - subnet-0d0242b967352e6a4
         - subnet-0dd7d193b2d2df967
+    layers:
+      - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
+      - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:hubspot-api-client-layer-py3-8:2
 
 resources:
   Resources:
