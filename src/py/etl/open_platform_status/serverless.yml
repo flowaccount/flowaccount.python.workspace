@@ -12,8 +12,11 @@ custom:
   packageExternal:
     external:
       - '../../flowaccount'
+  pythonRequirements:
+    slim: true
 
 package:
+  individually: true
   patterns:
     - '!node_modules/**'
     - '!package-lock.json'
@@ -98,7 +101,8 @@ functions:
         - subnet-0dd7d193b2d2df967
   
   load-hubspot:
-    handler: handlers/load_hubspot.handle
+    handler: index.handle
+    module: functions/load_hubspot
     role: loadHubSpotRole
     description: Load latest open platform status to HubSpot
     environment:
