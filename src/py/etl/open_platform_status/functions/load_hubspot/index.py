@@ -21,8 +21,7 @@ def get_platform_from_redshift(
 ) -> pd.DataFrame:
     """Get latest (company, platform) pair connection status from RedShift."""
 
-    redshift_df = wr.redshift.read_sql_query(
-        f"""
+    query = f"""
             WITH cte_1 AS (
                 SELECT
                     company_key,
@@ -43,9 +42,8 @@ def get_platform_from_redshift(
             JOIN {platform_schema}.dim_company AS c ON c.company_key = f.company_key
             JOIN {hubspot_schema}.company_ref AS h ON h.flowaccount_id = c.dynamodb_key
             WHERE row_num = 1
-        """,
-        con=conn,
-    )
+        """
+    redshift_df = wr.redshift.read_sql_query(query, con=conn)
 
     redshift_df["platform"] = redshift_df["platform"].astype("category")
 
