@@ -6,7 +6,6 @@ useDotenv: true
 
 plugins:
   - serverless-package-external
-  - serverless-python-requirements
 
 custom:
   packageExternal:
