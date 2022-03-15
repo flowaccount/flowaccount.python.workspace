@@ -25,7 +25,7 @@ package:
 provider:
   name: aws
   runtime: ${env:RUNTIME, "python3.8"}
-  stage: ${opt:stage, "development"}
+  stage: ${opt:stage, "staging"}
   region: ${env:AWS_REGION, "ap-southeast-1"}
   layers:
     - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
