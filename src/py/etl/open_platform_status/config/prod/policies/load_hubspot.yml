@@ -1,0 +1,40 @@
+Policy:
+  PolicyName: EtlDynamoDBLoadHubSpotPolicy
+  PolicyDocument: 
+    Version: '2012-10-17'
+    Statement:
+      # Allow create logging group
+      - Effect: Allow
+        Action:
+          - logs:CreateLogStream
+          - logs:CreateLogGroup
+        Resource:
+          - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*"
+      # Allow logging
+      - Effect: Allow
+        Action:
+          - logs:PutLogEvents
+        Resource:
+          - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
+      # Allow R/W on RedShift
+      - Effect: Allow
+        Action:
+          - redshift-data:BatchExecuteStatement
+          - redshift-data:ExecuteStatement
+          - redshift-data:CancelStatement
+          - redshift-data:ListStatements
+          - redshift-data:GetStatementResult
+          - redshift-data:DescribeStatement
+          - redshift-data:ListDatabases
+          - redshift-data:ListSchemas
+          - redshift-data:ListTables
+          - redshift-data:DescribeTable
+        Resource:
+          - arn:aws:redshift:::etl-redshift-prod-redshift-cluster
+      # Allow to retrieve secret
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource:
+          - ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+          - ${file(./config/${opt:stage}/secrets.yml):HubSpotTokenSecretArn}

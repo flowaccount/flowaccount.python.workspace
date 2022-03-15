@@ -1,0 +1,6 @@
+RedShiftVpc:
+  securityGroupIds:
+    - sg-00b9cd134942c69ab
+  subnetIds:
+    - subnet-0d6e3d18293e6fc84
+    - subnet-0a847db8b37130f1f

@@ -1,0 +1,2 @@
+RawBucket: etl-raw-bucket
+CleanBucket: etl-clean-bucket
