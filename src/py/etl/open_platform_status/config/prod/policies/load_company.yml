@@ -54,3 +54,13 @@ Policy:
           - secretsmanager:GetSecretValue
         Resource:
           - ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+      # Allow to attach VPC
+      - Effect: Allow
+        Action:
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeVpcs
+        Resource: "*"
