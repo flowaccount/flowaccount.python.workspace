@@ -8,7 +8,7 @@ clean_bucket = os.environ["CLEAN_BUCKET"]
 table_key = os.environ["TABLE_KEY"]
 secret_id = os.environ["REDSHIFT_SECRET_ARN"]
 dbname = os.environ["REDSHIFT_DB"]
-schema = os.environ["REDSHIFT_SCHEMA"]
+dim_schema = os.environ["REDSHIFT_DIMENSION_SCHEMA"]
 
 
 def get_company_from_s3(s3_key: str):
@@ -61,14 +61,14 @@ def handle(event, context):
 
     with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
         # Get DynamoDB company ids from RedShift
-        redshift_df = get_company_from_redshift(schema, conn)
+        redshift_df = get_company_from_redshift(dim_schema, conn)
 
         # Get new companies not in RedShift
         new_company_df = get_new_company(redshift_df, s3_df)
 
         # Write new companies to RedShift
         if not new_company_df.empty:
-            load_company(new_company_df, schema, conn)
+            load_company(new_company_df, dim_schema, conn)
             response = {
                 "statusCode": 200,
                 "body": {

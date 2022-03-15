@@ -12,7 +12,8 @@ from redshift_connector import Connection as RedShiftConnection
 
 secret_id = os.environ["REDSHIFT_SECRET_ARN"]
 dbname = os.environ["REDSHIFT_DB"]
-platform_schema = os.environ["REDSHIFT_PLATFORM_SCHEMA"]
+fact_schema = os.environ["REDSHIFT_FACT_SCHEMA"]
+dim_schema = os.environ["REDSHIFT_DIMENSION_SCHEMA"]
 hubspot_schema = os.environ["REDSHIFT_HUBSPOT_SCHEMA"]
 hubspot_token_arn = os.environ["HUBSPOT_ACCESS_TOKEN_ARN"]
 
@@ -32,7 +33,7 @@ def get_platform_from_redshift(
                         PARTITION BY company_key, platform
                         ORDER BY date_key DESC
                     ) AS row_num
-                FROM {platform_schema}.fact_open_platform_connection
+                FROM {fact_schema}.fact_open_platform_connection
             )
             SELECT
                 h.flowaccount_id AS flowaccount_id,
@@ -40,7 +41,7 @@ def get_platform_from_redshift(
                 f.platform AS platform,
                 f.status AS status
             FROM cte_1 AS f
-            JOIN {platform_schema}.dim_company AS c ON c.company_key = f.company_key
+            JOIN {dim_schema}.dim_company AS c ON c.company_key = f.company_key
             JOIN {hubspot_schema}.company_ref AS h ON h.flowaccount_id = c.dynamodb_key
             WHERE row_num = 1
         """
@@ -125,7 +126,7 @@ def handle(event, context):
 
     # Get platform status for all HubSpot companies
     with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
-        redshift_df = get_platform_from_redshift(platform_schema, hubspot_schema, conn)
+        redshift_df = get_platform_from_redshift(dim_schema, hubspot_schema, conn)
     agg_df = aggregate_platform_by_company(redshift_df)
 
     # Retrieve HubSpot access token

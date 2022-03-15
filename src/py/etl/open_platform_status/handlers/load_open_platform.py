@@ -10,7 +10,8 @@ clean_bucket = os.environ["CLEAN_BUCKET"]
 table_key = os.environ["TABLE_KEY"]
 secret_id = os.environ["REDSHIFT_SECRET_ARN"]
 dbname = os.environ["REDSHIFT_DB"]
-schema = os.environ["REDSHIFT_SCHEMA"]
+dim_schema = os.environ["REDSHIFT_DIMENSION_SCHEMA"]
+fact_schema = os.environ["REDSHIFT_FACT_SCHEMA"]
 
 
 def format_date_key(date_obj: date) -> int:
@@ -91,10 +92,10 @@ def handle(event, context):
 
     with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
         # Get all companies in RedShift
-        rs_company_df = get_company_from_redshift(schema, conn)
+        rs_company_df = get_company_from_redshift(dim_schema, conn)
 
         # Get all known platforms from both S3 and RedShift
-        rs_platform_sr = get_platform_from_redshift(schema, conn)
+        rs_platform_sr = get_platform_from_redshift(fact_schema, conn)
         platform_sr = (
             pd.concat(
                 rs_platform_sr, s3_platform_df["platform_name"], ignore_index=True
@@ -113,7 +114,7 @@ def handle(event, context):
         wr.redshift.to_sql(
             df=platform_status_df,
             table="fact_open_platform_connection",
-            schema=schema,
+            schema=fact_schema,
             con=conn,
             mode="append",
             use_column_names=True,
