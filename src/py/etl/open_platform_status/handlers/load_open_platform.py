@@ -99,7 +99,7 @@ def handle(event, context):
         rs_platform_sr = get_platform_from_redshift(fact_schema, conn)
         platform_sr = (
             pd.concat(
-                rs_platform_sr, s3_platform_df["platform_name"], ignore_index=True
+                [rs_platform_sr, s3_platform_df["platform_name"]], ignore_index=True
             )
             .rename("platform")
             .drop_duplicates()
