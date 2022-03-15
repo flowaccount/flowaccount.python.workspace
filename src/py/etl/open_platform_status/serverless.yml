@@ -81,7 +81,7 @@ functions:
     environment:
       CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
@@ -94,7 +94,7 @@ functions:
     description: Load latest open platform status to HubSpot
     environment:
       HUBSPOT_ACCESS_TOKEN_ARN: ${env:HUBSPOT_ACCESS_TOKEN_ARN}
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
