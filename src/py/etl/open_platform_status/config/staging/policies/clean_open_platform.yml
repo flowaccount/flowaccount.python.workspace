@@ -9,13 +9,13 @@ Policy:
           - logs:CreateLogStream
           - logs:CreateLogGroup
         Resource:
-          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+          - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*"
       # Allow logging
       - Effect: Allow
         Action:
           - logs:PutLogEvents
         Resource:
-          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+          - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
       # Allow reading manifest from raw bucket
       - Effect: Allow
         Action:
