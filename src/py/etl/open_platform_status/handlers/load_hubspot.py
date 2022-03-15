@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 
 import awswrangler as wr
@@ -131,12 +132,12 @@ def handle(event, context):
     sm_client = boto3.client("secretsmanager")
     resp = sm_client.get_secret_value(SecretId=hubspot_token_arn)
     if "SecretString" in resp:
-        access_token = resp["SecretString"]
+        secret = json.loads(resp["SecretString"])
     else:
-        access_token = base64.b64decode(resp["SecretBinary"])
+        secret = json.loads(base64.b64decode(resp["SecretBinary"]))
 
     # Update HubSpot companies
-    hs_client = hs.Client.create(access_token=access_token)
+    hs_client = hs.Client.create(access_token=secret["HUBSPOT_ACCESS_TOKEN"])
     hubspot_batch_update_platform(agg_df, 10, hs_client)
 
     return {"status": 200}
