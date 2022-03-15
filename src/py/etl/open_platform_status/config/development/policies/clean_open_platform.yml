@@ -1,0 +1,36 @@
+Policy:
+  PolicyName: EtlDynamoDBCleanOpenPlatformtPolicy
+  PolicyDocument: 
+    Version: '2012-10-17'
+    Statement:
+      # Allow create logging group
+      - Effect: Allow
+        Action:
+          - logs:CreateLogStream
+          - logs:CreateLogGroup
+        Resource:
+          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+      # Allow logging
+      - Effect: Allow
+        Action:
+          - logs:PutLogEvents
+        Resource:
+          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+      # Allow reading manifest from raw bucket
+      - Effect: Allow
+        Action:
+          - s3:GetObject
+        Resource:
+          - arn:aws:s3:::${env:RAW_BUCKET}/*
+      # Allow writing manifest to clean bucket
+      - Effect: Allow
+        Action:
+          - s3:PutObject
+        Resource:
+          - arn:aws:s3:::${env:CLEAN_BUCKET}/*
+      # Allow all Glue actions
+      - Effect: Allow
+        Action:
+          - glue:*
+        Resource:
+          - "*"

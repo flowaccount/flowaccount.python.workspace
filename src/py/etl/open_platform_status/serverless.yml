@@ -20,6 +20,7 @@ package:
     - '!.pytest_cache/**'
     - '!BUILD'
     - '!**/BUILD'
+    - '!config/**'
 
 provider:
   name: aws
@@ -27,7 +28,7 @@ provider:
   stage: ${opt:stage, "development"}
   region: ${env:AWS_REGION, "ap-southeast-1"}
   layers:
-    - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
+    - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
 
 functions:
   export-table:
@@ -71,12 +72,7 @@ functions:
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
-    vpc:
-      securityGroupIds:
-        - sg-04d1b3a38f1948e78
-      subnetIds:
-        - subnet-0d0242b967352e6a4
-        - subnet-0dd7d193b2d2df967
+    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
   
   load-open-platform:
     handler: handlers/load_open_platform.handle
@@ -89,12 +85,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_SCHEMA: ${env:REDSHIFT_SCHEMA}
     maximumEventAge: 300
-    vpc:
-      securityGroupIds:
-        - sg-04d1b3a38f1948e78
-      subnetIds:
-        - subnet-0d0242b967352e6a4
-        - subnet-0dd7d193b2d2df967
+    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
   
   load-hubspot:
     handler: handlers/load_hubspot.handle
@@ -107,256 +98,15 @@ functions:
       REDSHIFT_PLATFORM_SCHEMA: ${env:REDSHIFT_SCHEMA}
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
     maximumEventAge: 300
-    vpc:
-      securityGroupIds:
-        - sg-04d1b3a38f1948e78
-      subnetIds:
-        - subnet-0d0242b967352e6a4
-        - subnet-0dd7d193b2d2df967
+    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
     layers:
-      - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
-      - arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:hubspot-api-client-layer-py3-8:2
+      - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
+      - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
 
 resources:
   Resources:
-    cleanOpenPlatformRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: EtlDynamoDBCleanOpenPlatformRole
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: EtlDynamoDBCleanOpenPlatformtPolicy
-            PolicyDocument: 
-              Version: '2012-10-17'
-              Statement:
-                # Allow create logging group
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogStream
-                    - logs:CreateLogGroup
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
-                # Allow logging
-                - Effect: Allow
-                  Action:
-                    - logs:PutLogEvents
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
-                # Allow reading manifest from raw bucket
-                - Effect: Allow
-                  Action:
-                    - s3:GetObject
-                  Resource:
-                    - arn:aws:s3:::${env:RAW_BUCKET}/*
-                # Allow writing manifest to clean bucket
-                - Effect: Allow
-                  Action:
-                    - s3:PutObject
-                  Resource:
-                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
-                # Allow all Glue actions
-                - Effect: Allow
-                  Action:
-                    - glue:*
-                  Resource:
-                    - "*"
-    loadCompanyRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: EtlDynamoDBLoadCompanyRole
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: EtlDynamoDBLoadCompanyPolicy
-            PolicyDocument: 
-              Version: '2012-10-17'
-              Statement:
-                # Allow create logging group
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogStream
-                    - logs:CreateLogGroup
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
-                # Allow logging
-                - Effect: Allow
-                  Action:
-                    - logs:PutLogEvents
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
-                # Allow reading from clean bucket
-                - Effect: Allow
-                  Action:
-                    - s3:ListBucket
-                  Resource:
-                    - arn:aws:s3:::${env:CLEAN_BUCKET}
-                - Effect: Allow
-                  Action:
-                    - s3:GetObject
-                  Resource:
-                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
-                # Allow all Glue actions
-                - Effect: Allow
-                  Action:
-                    - glue:*
-                  Resource:
-                    - "*"
-                # Allow R/W on RedShift
-                - Effect: Allow
-                  Action:
-                    - redshift-data:BatchExecuteStatement
-                    - redshift-data:ExecuteStatement
-                    - redshift-data:CancelStatement
-                    - redshift-data:ListStatements
-                    - redshift-data:GetStatementResult
-                    - redshift-data:DescribeStatement
-                    - redshift-data:ListDatabases
-                    - redshift-data:ListSchemas
-                    - redshift-data:ListTables
-                    - redshift-data:DescribeTable
-                  Resource:
-                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
-                # Allow to retrieve secret
-                - Effect: Allow
-                  Action:
-                    - secretsmanager:GetSecretValue
-                  Resource:
-                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
-        ManagedPolicyArns:
-          - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
-    loadOpenPlatformRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: EtlDynamoDBLoadOpenPlatformRole
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: EtlDynamoDBLoadOpenPlatformPolicy
-            PolicyDocument: 
-              Version: '2012-10-17'
-              Statement:
-                # Allow create logging group
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogStream
-                    - logs:CreateLogGroup
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
-                # Allow logging
-                - Effect: Allow
-                  Action:
-                    - logs:PutLogEvents
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
-                # Allow reading from clean bucket
-                - Effect: Allow
-                  Action:
-                    - s3:ListBucket
-                  Resource:
-                    - arn:aws:s3:::${env:CLEAN_BUCKET}
-                - Effect: Allow
-                  Action:
-                    - s3:GetObject
-                  Resource:
-                    - arn:aws:s3:::${env:CLEAN_BUCKET}/*
-                # Allow all Glue actions
-                - Effect: Allow
-                  Action:
-                    - glue:*
-                  Resource:
-                    - "*"
-                # Allow R/W on RedShift
-                - Effect: Allow
-                  Action:
-                    - redshift-data:BatchExecuteStatement
-                    - redshift-data:ExecuteStatement
-                    - redshift-data:CancelStatement
-                    - redshift-data:ListStatements
-                    - redshift-data:GetStatementResult
-                    - redshift-data:DescribeStatement
-                    - redshift-data:ListDatabases
-                    - redshift-data:ListSchemas
-                    - redshift-data:ListTables
-                    - redshift-data:DescribeTable
-                  Resource:
-                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
-                # Allow to retrieve secret
-                - Effect: Allow
-                  Action:
-                    - secretsmanager:GetSecretValue
-                  Resource:
-                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
-        ManagedPolicyArns:
-          - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
-    loadHubSpotRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: EtlDynamoDBLoadHubSpotRole
-        AssumeRolePolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: EtlDynamoDBLoadHubSpotPolicy
-            PolicyDocument: 
-              Version: '2012-10-17'
-              Statement:
-                # Allow create logging group
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogStream
-                    - logs:CreateLogGroup
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
-                # Allow logging
-                - Effect: Allow
-                  Action:
-                    - logs:PutLogEvents
-                  Resource:
-                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
-                # Allow R/W on RedShift
-                - Effect: Allow
-                  Action:
-                    - redshift-data:BatchExecuteStatement
-                    - redshift-data:ExecuteStatement
-                    - redshift-data:CancelStatement
-                    - redshift-data:ListStatements
-                    - redshift-data:GetStatementResult
-                    - redshift-data:DescribeStatement
-                    - redshift-data:ListDatabases
-                    - redshift-data:ListSchemas
-                    - redshift-data:ListTables
-                    - redshift-data:DescribeTable
-                  Resource:
-                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
-                # Allow to retrieve secret
-                - Effect: Allow
-                  Action:
-                    - secretsmanager:GetSecretValue
-                  Resource:
-                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
-        ManagedPolicyArns:
-          - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
+    # cleanOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformRole}
+    cleanOpenPlatformRole: ${file(./config/development/roles/clean_open_platform.yml):Role}
+    loadCompanyRole: ${file(./config/${opt:stage}/roles.yml):LoadCompanyRole}
+    loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
+    loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}

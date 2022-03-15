@@ -1,0 +1,2 @@
+AwsWranglerLayer: arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:aws-data-wrangler-layer-py3-8:1
+HubSpotLayer: arn:aws:lambda:ap-southeast-1:${aws:accountId}:layer:hubspot-api-client-layer-py3-8:2

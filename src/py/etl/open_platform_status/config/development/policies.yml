@@ -1,0 +1,4 @@
+CleanOpenPlatformPolicy: ${file(./config/${opt:stage}/policies/clean_open_platform.yml):Policy}
+LoadCompanyPolicy: ${file(./config/${opt:stage}/policies/load_company.yml):Policy}
+LoadOpenPlatformPolicy: ${file(./config/${opt:stage}/policies/load_open_platform.yml):Policy}
+LoadHubSpotPolicy: ${file(./config/${opt:stage}/policies/load_hubspot.yml):Policy}

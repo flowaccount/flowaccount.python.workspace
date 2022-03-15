@@ -1,0 +1,39 @@
+Policy:
+  PolicyName: EtlDynamoDBLoadHubSpotPolicy
+  PolicyDocument: 
+    Version: '2012-10-17'
+    Statement:
+      # Allow create logging group
+      - Effect: Allow
+        Action:
+          - logs:CreateLogStream
+          - logs:CreateLogGroup
+        Resource:
+          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*"
+      # Allow logging
+      - Effect: Allow
+        Action:
+          - logs:PutLogEvents
+        Resource:
+          - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/etl-dynamodb-dev*:*:*"
+      # Allow R/W on RedShift
+      - Effect: Allow
+        Action:
+          - redshift-data:BatchExecuteStatement
+          - redshift-data:ExecuteStatement
+          - redshift-data:CancelStatement
+          - redshift-data:ListStatements
+          - redshift-data:GetStatementResult
+          - redshift-data:DescribeStatement
+          - redshift-data:ListDatabases
+          - redshift-data:ListSchemas
+          - redshift-data:ListTables
+          - redshift-data:DescribeTable
+        Resource:
+          - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
+      # Allow to retrieve secret
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource:
+          - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
