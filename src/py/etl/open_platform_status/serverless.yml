@@ -105,8 +105,7 @@ functions:
 
 resources:
   Resources:
-    # cleanOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformRole}
-    cleanOpenPlatformRole: ${file(./config/development/roles/clean_open_platform.yml):Role}
+    cleanOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformRole}
     loadCompanyRole: ${file(./config/${opt:stage}/roles.yml):LoadCompanyRole}
     loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
     loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}
