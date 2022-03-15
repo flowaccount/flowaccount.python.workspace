@@ -21,13 +21,13 @@ Policy:
         Action:
           - s3:GetObject
         Resource:
-          - arn:aws:s3:::${env:RAW_BUCKET}/*
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):RawBucket}/*
       # Allow writing manifest to clean bucket
       - Effect: Allow
         Action:
           - s3:PutObject
         Resource:
-          - arn:aws:s3:::${env:CLEAN_BUCKET}/*
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/*
       # Allow all Glue actions
       - Effect: Allow
         Action:

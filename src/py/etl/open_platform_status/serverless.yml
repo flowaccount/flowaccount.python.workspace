@@ -36,7 +36,7 @@ functions:
     description: Export DynamoDB to S3
     environment:
       DYNAMODB_ARN: arn:aws:dynamodb:${aws:region}:${aws:accountId}
-      RAW_BUCKET: ${env:RAW_BUCKET}
+      RAW_BUCKET: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
       S3_PREFIX: ${env:RAW_DYNAMODB_PREFIX}
 
   parse-export-manifest:
@@ -51,11 +51,11 @@ functions:
     role: cleanOpenPlatformRole
     description: Clean new export manifest summary, manifest files and records
     environment:
-      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
       CLEAN_CATALOG: ${env:CLEAN_CATALOG}
     events:
       - s3:
-          bucket: ${env:RAW_BUCKET}
+          bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
           event: s3:ObjectCreated:*
           rules:
             - prefix: dynamodb/tables/
@@ -67,7 +67,7 @@ functions:
     role: loadCompanyRole
     description: Load new companies into RedShift
     environment:
-      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
@@ -79,7 +79,7 @@ functions:
     role: loadOpenPlatformRole
     description: Load open platform status into RedShift
     environment:
-      CLEAN_BUCKET: ${env:CLEAN_BUCKET}
+      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
       TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
       REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:pipat-etl-redshift-lxoxVP
       REDSHIFT_DB: ${env:REDSHIFT_DB}

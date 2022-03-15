@@ -21,12 +21,12 @@ Policy:
         Action:
           - s3:ListBucket
         Resource:
-          - arn:aws:s3:::${env:CLEAN_BUCKET}
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}
       - Effect: Allow
         Action:
           - s3:GetObject
         Resource:
-          - arn:aws:s3:::${env:CLEAN_BUCKET}/*
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/*
       # Allow all Glue actions
       - Effect: Allow
         Action:
