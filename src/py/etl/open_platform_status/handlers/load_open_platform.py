@@ -42,7 +42,8 @@ def get_platform_from_redshift(schema: str, conn: RedShiftConnection) -> pd.Seri
     """Get all known platforms in RedShift."""
 
     redshift_df = wr.redshift.read_sql_query(
-        f"SELECT DISTINCT platform FROM {schema}.fact_open_platform_connection, con=conn"
+        f"SELECT DISTINCT platform FROM {schema}.fact_open_platform_connection",
+        con=conn,
     )
 
     return redshift_df["platform"]
