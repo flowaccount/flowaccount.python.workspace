@@ -1,0 +1,141 @@
+# ETL DynamoDB Service
+
+This is a Serverless framework service performing ETL on FlowAccount DynamoDB.
+Data is loaded into S3 raw bucket and cleaned into S3 clean bucket.
+It is then loaded into AWS RedShift and HubSpot CRM as needed.
+
+## Prerequisite
+
+### Runtime Requirements
+
+This service requires Python 3.8 for coding and Node.js 14 for Serverless framework.
+
+### AWS Resources
+
+Serverless framework requires some AWS resources to be created beforehand.
+The service uses the following resources:
+
+* S3 raw and clean buckets
+* A RedShift cluster with the following tables:
+
+    Schema  | Table                         | Table Description
+    --------|-------------------------------|------------------------------------------------------
+    dim     | dim_date                      | Date dimension
+    dim     | dim_company                   | Company dimension
+    fact    | fact_open_platform_connection | Open platform connection status snapshot
+    hubspot | company_ref                   | FlowAccount company ID and HubSpot company ID mapping
+
+* A VPC to connect to the RedShift cluster
+* A RedShift credential with RW privileges to tables above stored in Secrets Manager
+* A HubSpot private app access token stored in Secrets Manager
+* AWS Wrangler Lambda layer - See Appendix A for creating
+* HubSpot Client layer - See Appendix B for creating
+
+## Getting started
+
+1. Install Serverless plugin
+
+    ```bash
+    npm install
+    ```
+
+2. Deploy service
+
+    ```bash
+    sls deploy --aws-profile $AWS_PROFILE --stage staging
+    ```
+
+3. Export DynamoDB table to S3
+
+    Go to DynamoDB console and export flowaccount-open-platform-company-user-v2 table
+    to S3 raw bucket with prefix `dynamodb/tables/flowaccount-open-platform-company-user-v2/`
+    and take note of its export id.
+
+    For example, an export arn `arn:aws:dynamodb:::table/flowaccount-open-platform-company-user-v2/export/01659745230216-b6539576`
+    has export id `01659745230216-b6539576`.
+
+    Wait for the export for finish before proceeding to the next step.
+    Once finished, the exported table will be cleaned and placed in the
+    S3 clean bucket in `dynamodb/` directory.
+
+4. Load Company Dimension to RedShift
+
+    Go to etl-dynamodb-staging-load-company Lambda console and create a test
+    with the following payload, then run it.
+
+    ```json
+    {"export_id": "__EXPORT_IN_STEP_3__"}
+    ```
+
+    This will load new companies into the company dimension.
+
+5. Load Open Platform Status to RedShift
+
+    Go to etl-dynamodb-staging-load-open-platform Lambda console and create
+    a test with the following payload, then run it.
+
+    ```json
+    {"export_id": "__EXPORT_IN_STEP_3__"}
+    ```
+
+    This will load open platform connection status for each company and
+    platform pair into the fact_open_platform_connection table.
+
+6. Load Latest Open Platform Status to HubSpot
+
+    Go to etl-dynamodb-staging-load-hubspot Lambda console and create
+    a test with the following payload, then run it.
+
+    ```json
+    {}
+    ```
+
+    This will load latest open platform connection status in the fact table
+    to HubSpot CRM.
+
+## Appendix
+
+### A. Create AWS Wrangler Layer
+
+1. Download the layer file
+
+    Download the AWS Wrangler layer for Python 3.8 file from [GitHub releases][Wrangler].
+
+2. Register the layer
+
+    2.1. Go to AWS Console > Lambda > Layers
+    2.2. Select "Create Layer" on the top right
+    2.3. Fill in layer information as followings:
+            Name: aws-data-wrangler-layer-py3-8
+            Description: AWS Data Wrangler 2.14 for Python 3.8
+            Upload: Upload from a .zip file with the layer file from step 1
+            Compatible architectures: Leave blank
+            Compatible runtimes: python3.8
+    2.4. Click Create to finish
+
+### B. Create HubSpot Layer
+
+1. Create a layer file
+
+    This creates `hubspot-layer.zip` layer file
+
+    ```bash
+    mkdir -p hubspot-layer/python
+    cd hubspot-layer
+    pip install --target python/ hubspot-api-client
+    zip -r ../hubspot-layer.zip .
+    ```
+
+2. Register the layer
+
+    2.1. Go to AWS Console > Lambda > Layers
+    2.2. Select "Create Layer" on the top right
+    2.3. Fill in layer information as followings:
+            Name: hubspot-api-client-layer-py3-8
+            Description: HubSpot API Client for Python 3.8
+            Upload: Upload from a .zip file with the layer file from step 1
+            Compatible architectures: Leave blank
+            Compatible runtimes: python3.8
+    2.4. Click Create to finish
+
+[Wrangler]: https://github.com/awslabs/aws-data-wrangler/releases/tag/2.14.0
