@@ -27,45 +27,46 @@ def clean_open_platform_cdc(cdc_list: List[dict]) -> pd.DataFrame:
     df = df.drop(columns=["Keys"])
 
     # Extract fields in Image column
-    image_df = pd.json_normalize(df["Image"]).rename(
-        columns=lambda x: x.rsplit(".")[0]
-    )
+    image_df = pd.json_normalize(df["Image"]).rename(columns=lambda x: x.rsplit(".")[0])
     df = pd.concat([df, image_df], axis=1)
     df = df.drop(columns=["Image"])
 
     # Convert pascal case to camel case
-    df = df.rename(
-        columns=lambda x: x[0].lower() + x[1:] if x[0].isupper() else x
-    )
+    df = df.rename(columns=lambda x: x[0].lower() + x[1:] if x[0].isupper() else x)
     df = df.rename(columns={"eventID": "event_id"})
 
     # Convert camel case to snake case
     df = df.rename(columns=format_snake_case)
 
     # Create output dataframe with known columns
-    clean_df = pd.DataFrame(columns=[
-        # CDC metadata
-        "event_id", "event_name", "table_name", "approximate_creation_date_time",
-        # Known record columns
-        "company_id",
-        "shop_id",
-        "is_delete",
-        "user_id",
-        "platform_name",
-        "platform_info",
-        "expired_at",
-        "payment_channel_id",
-        "created_at",
-        "expires_in",
-        "is_vat",
-        "payload",
-        "guid",
-        "refresh_expires_in",
-        "updated_at",
-        "refresh_token",
-        "remarks",
-        "access_token",
-        ])
+    clean_df = pd.DataFrame(
+        columns=[
+            # CDC metadata
+            "event_id",
+            "event_name",
+            "table_name",
+            "approximate_creation_date_time",
+            # Known record columns
+            "company_id",
+            "shop_id",
+            "is_delete",
+            "user_id",
+            "platform_name",
+            "platform_info",
+            "expired_at",
+            "payment_channel_id",
+            "created_at",
+            "expires_in",
+            "is_vat",
+            "payload",
+            "guid",
+            "refresh_expires_in",
+            "updated_at",
+            "refresh_token",
+            "remarks",
+            "access_token",
+        ]
+    )
 
     # Insert records with arbitrary columns
     clean_df = pd.concat([clean_df, df])
