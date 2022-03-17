@@ -10,44 +10,65 @@ def clean_open_platform_cdc(cdc_list: List[dict]) -> pd.DataFrame:
     raw_df = pd.DataFrame(cdc_list)
 
     # Extract fields in dynamodb column
-    dynamodb_df = pd.json_normalize(clean_df["dynamodb"], max_level=0)
-    clean_df = pd.concat([raw_df, dynamodb_df], axis=1)
-    clean_df = clean_df.drop(columns=["dynamodb"])
+    dynamodb_df = pd.json_normalize(df["dynamodb"], max_level=0)
+    df = pd.concat([raw_df, dynamodb_df], axis=1)
+    df = df.drop(columns=["dynamodb"])
 
     # Choose current record data based on event type
-    clean_df["Image"] = clean_df.apply(
+    df["Image"] = df.apply(
         lambda x: x["NewImage"]
         if x["eventName"] == "INSERT" or x["eventName"] == "MODIFY"
         else x["OldImage"],
         axis=1,
     )
-    clean_df = clean_df.drop(columns=["NewImage", "OldImage"])
+    df = df.drop(columns=["NewImage", "OldImage"])
 
     # Drop Keys column too because their values are already included in Image column
-    clean_df = clean_df.drop(columns=["Keys"])
+    df = df.drop(columns=["Keys"])
 
     # Extract fields in Image column
-    image_df = pd.json_normalize(clean_df["Image"]).rename(
+    image_df = pd.json_normalize(df["Image"]).rename(
         columns=lambda x: x.rsplit(".")[0]
     )
-    clean_df = pd.concat([clean_df, image_df], axis=1)
-    clean_df = clean_df.drop(columns=["Image"])
+    df = pd.concat([df, image_df], axis=1)
+    df = df.drop(columns=["Image"])
 
     # Convert pascal case to camel case
-    clean_df = clean_df.rename(
+    df = df.rename(
         columns=lambda x: x[0].lower() + x[1:] if x[0].isupper() else x
     )
-    clean_df = clean_df.rename(columns={"eventID": "event_id"})
+    df = df.rename(columns={"eventID": "event_id"})
 
     # Convert camel case to snake case
-    clean_df = clean_df.rename(columns=format_snake_case)
+    df = df.rename(columns=format_snake_case)
 
-    # Select columns for output
-    record_cols = list(image_df.columns.values)
-    clean_df = clean_df[
-        ["event_id", "event_name", "table_name", "approximate_creation_date_time"]
-        + record_cols
-    ]
+    # Create output dataframe with known columns
+    clean_df = pd.DataFrame(columns=[
+        # CDC metadata
+        "event_id", "event_name", "table_name", "approximate_creation_date_time",
+        # Known record columns
+        "company_id",
+        "shop_id",
+        "is_delete",
+        "user_id",
+        "platform_name",
+        "platform_info",
+        "expired_at",
+        "payment_channel_id",
+        "created_at",
+        "expires_in",
+        "is_vat",
+        "payload",
+        "guid",
+        "refresh_expires_in",
+        "updated_at",
+        "refresh_token",
+        "remarks",
+        "access_token",
+        ])
+
+    # Insert records with arbitrary columns
+    clean_df = pd.concat([clean_df, df])
 
     # Enforce data types
     clean_df["approximate_creation_date_time"] = pd.to_datetime(
