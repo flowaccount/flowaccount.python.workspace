@@ -97,16 +97,6 @@ def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
     # Rename columns e.g. companyId.N --> company_id
     df = df.rename(columns=format_column_name)
 
-    # Fill NaN with -1 for integer columns
-    for col in [
-        "company_id",
-        "payment_channel_id",
-        "expires_in",
-        "refresh_expires_in",
-        "user_id",
-    ]:
-        df[col] = df[col].fillna(-1)
-
     df = df.astype(
         {
             "company_id": "int64",
@@ -114,13 +104,13 @@ def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
             "platform_info": "string",
             "is_delete": "bool",
             # 'expired_at': 'int64',
-            "payment_channel_id": "int64",
+            "payment_channel_id": "Int64",
             # 'created_at': 'int64',
-            "expires_in": "int64",
+            "expires_in": "Int64",
             "is_vat": "bool",
             "payload": "string",
             "guid": "string",
-            "refresh_expires_in": "int64",
+            "refresh_expires_in": "Int64",
             "user_id": "int64",
             # 'updated_at': 'int64',
             "platform_name": "string",
