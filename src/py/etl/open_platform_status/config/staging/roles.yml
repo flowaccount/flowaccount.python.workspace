@@ -2,3 +2,4 @@ CleanOpenPlatformRole: ${file(./config/${opt:stage}/roles/clean_open_platform.ym
 LoadCompanyRole: ${file(./config/${opt:stage}/roles/load_company.yml):Role}
 LoadOpenPlatformRole: ${file(./config/${opt:stage}/roles/load_open_platform.yml):Role}
 LoadHubSpotRole: ${file(./config/${opt:stage}/roles/load_hubspot.yml):Role}
+CleanOpenPlatformStreamingRole: ${file(./config/${opt:stage}/roles/clean_open_platform_streaming.yml):Role}

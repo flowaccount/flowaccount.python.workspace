@@ -55,3 +55,11 @@ python_awslambda(
     description="Load latest open platform status to HubSpot",
     dependencies=["3rdparty/py:awswrangler", "3rdparty/py:hubspot-api-client"],
 )
+
+python_awslambda(
+    name="clean-open-platform-streaming",
+    runtime="python3.8",
+    handler="handlers/clean_open_platform_streaming:handle",
+    description="Clean open platform status CDC into S3 clean bucket",
+    dependencies=["3rdparty/py:awswrangler"],
+)

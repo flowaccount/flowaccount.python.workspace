@@ -105,9 +105,26 @@ functions:
       - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
       - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
 
+  clean-open-platform-streaming:
+    handler: handlers/clean_open_platform_streaming.handle
+    role: cleanOpenPlatformStreamingRole
+    description: Clean open platform status CDC into S3 clean bucket
+    environment:
+      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
+      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
+    events:
+      - s3:
+          bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
+            - suffix: .json
+          existing: true
+
 resources:
   Resources:
     cleanOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformRole}
     loadCompanyRole: ${file(./config/${opt:stage}/roles.yml):LoadCompanyRole}
     loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
     loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}
+    cleanOpenPlatformStreamingRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformStreamingRole}
