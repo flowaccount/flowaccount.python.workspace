@@ -1,0 +1,80 @@
+service: forward-dynamodb-cdc
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: ${opt:stage, "staging"}
+  region: ap-southeast-1
+  environment:
+    SRC_BUCKET: dynamodb-cdc-bucket
+    SRC_PREFIX: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
+    DST_BUCKET: pipat-raw-bucket
+    DST_PREFIX: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
+    DST_AWS_ID: 697698820969
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!package-lock.json'
+    - '!__pycache__/**'
+    - '!.pytest_cache/**'
+    - '!BUILD'
+    - '!**/BUILD'
+
+functions:
+  open-platform:
+    handler: handler.handle
+    description: Copy open platform table's CDC files to another S3 bucket
+    role: openPlatformRole
+    events:
+      - s3:
+          bucket: arn:aws:s3:${aws:region}:${aws:accountId}:${self:provider.environment.SRC_BUCKET}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: ${self:provider.environment.SRC_PREFIX}
+            - suffix: .json
+          existing: true
+
+resources:
+  Resources:
+    openPlatformRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ForwardDynamoDBCDCOpenPlatformRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: ForwardDynamoDBCDCOpenPlatformPolicy
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+              # Allow create logging group
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:CreateLogGroup
+                Resource:
+                  - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*"
+              # Allow logging
+              - Effect: Allow
+                Action:
+                  - logs:PutLogEvents
+                Resource:
+                  - "arn:aws:logs:::log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
+              - Effect: "Allow"
+                Action:
+                  - "s3:GetObject"
+                Resource: "arn:aws:s3:${aws:region}:${aws:accountId}:${self:provider.environment.SRC_BUCKET}/*"
+              - Effect: "Allow"
+                Action:
+                  - "s3:PutObject"
+                Resource:
+                    - "arn:aws:s3:${aws:region}${self:provider.environment.DST_AWS_ID}:${self:provider.environment.DST_BUCKET}/*"
