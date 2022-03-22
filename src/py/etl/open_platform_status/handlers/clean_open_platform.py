@@ -97,9 +97,21 @@ def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
     # Rename columns e.g. companyId.N --> company_id
     df = df.rename(columns=format_column_name)
 
+    # Convert string to int dtype
+    for col in [
+        "company_id",
+        "payment_channel_id",
+        "payment_channel_id",
+        "expires_in",
+        "refresh_expires_in",
+        "user_id",
+    ]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    # Enforce data types
     df = df.astype(
         {
-            "company_id": "int64",
+            "company_id": "Int64",
             "shop_id": "string",
             "platform_info": "string",
             "is_delete": "bool",
@@ -111,7 +123,7 @@ def clean_exported_files(bucket: str, files_df: pd.DataFrame) -> pd.DataFrame:
             "payload": "string",
             "guid": "string",
             "refresh_expires_in": "Int64",
-            "user_id": "int64",
+            "user_id": "Int64",
             # 'updated_at': 'int64',
             "platform_name": "string",
             "refresh_token": "string",
