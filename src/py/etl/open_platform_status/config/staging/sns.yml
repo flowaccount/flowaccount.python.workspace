@@ -1,0 +1,1 @@
+StreamingCleanedSnsArn: arn:aws:sns:${aws:region}:${aws:accountId}:etl-open-platform-status-streaming-cleaned

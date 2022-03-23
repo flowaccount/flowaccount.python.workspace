@@ -3,3 +3,4 @@ LoadCompanyPolicy: ${file(./config/${opt:stage}/policies/load_company.yml):Polic
 LoadOpenPlatformPolicy: ${file(./config/${opt:stage}/policies/load_open_platform.yml):Policy}
 LoadHubSpotPolicy: ${file(./config/${opt:stage}/policies/load_hubspot.yml):Policy}
 CleanOpenPlatformStreamingPolicy: ${file(./config/${opt:stage}/policies/clean_open_platform_streaming.yml):Policy}
+LoadHubSpotStreamingPolicy: ${file(./config/${opt:stage}/policies/load_hubspot_streaming.yml):Policy}

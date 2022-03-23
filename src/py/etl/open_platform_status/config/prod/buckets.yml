@@ -1,2 +1,3 @@
 RawBucket: etl-raw-bucket
 CleanBucket: etl-clean-bucket
+HubSpotSvcBucket: hubspot-service-bucket

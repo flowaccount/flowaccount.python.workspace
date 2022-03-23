@@ -120,6 +120,19 @@ functions:
             - prefix: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
             - suffix: .json
           existing: true
+  
+  load-hubspot-streaming:
+    handler: handlers/load_hubspot_streaming.handle
+    role: loadHubSpotStreamingRole
+    description: Load streamed open platform status to HubSpot update service bucket
+    environment:
+      REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+      REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
+      HUBSPOT_SVC_BUCKET: ${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}
+      HUBSPOT_SVC_COMPANY_UPDATE_PREFIX: ${env:HUBSPOT_SVC_COMPANY_UPDATE_PREFIX}
+    events:
+      - sns:
+          arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
 
 resources:
   Resources:
@@ -128,3 +141,4 @@ resources:
     loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
     loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}
     cleanOpenPlatformStreamingRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformStreamingRole}
+    loadHubSpotStreamingRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotStreamingRole}
