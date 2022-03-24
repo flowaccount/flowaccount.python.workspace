@@ -120,6 +120,19 @@ functions:
             - prefix: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
             - suffix: .json
           existing: true
+
+  load-redshift-streaming:
+    handler: handlers/load_redshift_streaming.handle
+    role: loadRedShiftStreamingRole
+    description: Load streamed open platform status to RedShift
+    environment:
+      REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
+      REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
+      REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
+    events:
+      - sns:
+          arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
   
   load-hubspot-streaming:
     handler: handlers/load_hubspot_streaming.handle
@@ -141,4 +154,5 @@ resources:
     loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
     loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}
     cleanOpenPlatformStreamingRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformStreamingRole}
+    loadRedShiftStreamingRole: ${file(./config/${opt:stage}/roles.yml):LoadRedShiftStreamingRole}
     loadHubSpotStreamingRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotStreamingRole}
