@@ -78,15 +78,16 @@ def handle(event, context):
 
     fact_df = convert_to_fact_table(cdc_df, company_df)
 
-    with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
-        wr.redshift.to_sql(
-            fact_df,
-            schema=rs_fact_schema,
-            table="fact_open_platform_connection",
-            mode="append",
-            use_column_names=True,
-            con=conn,
-        )
+    if fact_df.count() > 0:
+        with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
+            wr.redshift.to_sql(
+                fact_df,
+                schema=rs_fact_schema,
+                table="fact_open_platform_connection",
+                mode="append",
+                use_column_names=True,
+                con=conn,
+            )
 
     return {
         "status": 200,
