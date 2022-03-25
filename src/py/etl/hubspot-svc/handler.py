@@ -61,7 +61,7 @@ def handle(event, context):
     print(f"s3 create event: s3://{bucket}/{key}")
 
     obj = s3.get_object(Bucket=bucket, Key=key)["Body"]
-    lines = obj.read().decode("utf-8")
+    lines = obj.read().decode("utf-8").split("\n")
     inputs = [json.loads(line) for line in lines]
 
     batch_company_update(inputs)
