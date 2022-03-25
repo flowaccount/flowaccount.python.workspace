@@ -34,8 +34,8 @@ def handle(event, context):
     print(f"s3 create event: s3://{bucket}/{key}")
 
     cdc_df = wr.s3.read_parquet(
-        f"s3://{bucket}/{key}", columns=["company_id", "event_name"]
-    )
+        f"s3://{bucket}/{key}"
+    )[["company_id", "event_name"]]
 
     with wr.redshift.connect(secret_id=rs_secret_arn, dbanme="test") as conn:
         companies = cdc_df["company_id"].drop_duplicates().to_list()
