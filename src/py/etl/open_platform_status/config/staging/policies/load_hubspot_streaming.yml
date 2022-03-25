@@ -16,13 +16,19 @@ Policy:
           - logs:PutLogEvents
         Resource:
           - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
-      # Allow reading manifest from raw bucket
+      # Allow reading from clean bucket
+      - Effect: Allow
+        Action:
+          - s3:ListBucket
+        Resource:
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}
+      # Allow reading from clean bucket
       - Effect: Allow
         Action:
           - s3:GetObject
         Resource:
           - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/*
-      # Allow writing manifest to clean bucket
+      # Allow writing to service bucket
       - Effect: Allow
         Action:
           - s3:PutObject
