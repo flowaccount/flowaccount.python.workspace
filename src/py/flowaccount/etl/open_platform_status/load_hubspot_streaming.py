@@ -19,14 +19,14 @@ def get_hubspot_mapping(
 ) -> pd.DataFrame:
     """Get HubSpot FlowAccount HubSpot company ID mapping from RedShift."""
 
-    rs_df = wr.redshift.read_sql_query(
-        f"""
-        SELECT hubspot_id, flowaccount_id AS company_id
+    query = f"""
+        SELECT
+            hubspot_id,
+            CAST(flowaccount_id AS BIGINT) AS company_id
         FROM {schema}.{table}
         WHERE company_id IN ({str(companies)[1:-1]})
-        """,
-        con=conn,
-    )
+        """
+    rs_df = wr.redshift.read_sql_query(query, con=conn)
 
     return rs_df
 

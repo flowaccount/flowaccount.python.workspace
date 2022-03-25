@@ -36,7 +36,7 @@ def get_platform_from_redshift(
                 FROM {fact_schema}.fact_open_platform_connection
             )
             SELECT
-                h.flowaccount_id AS flowaccount_id,
+                CAST(h.flowaccount_id AS BIGINT) AS flowaccount_id,
                 h.hubspot_id AS hubspot_id,
                 f.platform AS platform,
                 f.status AS status
