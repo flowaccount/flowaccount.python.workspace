@@ -57,28 +57,29 @@ def handle(event, context):
     )
 
     # Update the dimension and refresh
-    with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
-        wr.redshift.to_sql(
-            new_company_df,
-            schema=rs_dim_schema,
-            table="dim_company",
-            mode="append",
-            use_column_names=True,
-            con=conn,
-        )
+    if new_company_df.shape[0] > 0:
+        with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
+            wr.redshift.to_sql(
+                new_company_df,
+                schema=rs_dim_schema,
+                table="dim_company",
+                mode="append",
+                use_column_names=True,
+                con=conn,
+            )
 
-        company_df = wr.redshift.read_sql_query(
-            f"""
-            SELECT company_key, dynamodb_key as company_id
-            FROM {rs_dim_schema}.dim_company
-            WHERE company_id IN {company_ids}
-            """,
-            con=conn,
-        )
+            company_df = wr.redshift.read_sql_query(
+                f"""
+                SELECT company_key, dynamodb_key as company_id
+                FROM {rs_dim_schema}.dim_company
+                WHERE company_id IN ({str(company_ids)[1:-1]})
+                """,
+                con=conn,
+            )
 
     fact_df = convert_to_fact_table(cdc_df, company_df)
 
-    if fact_df.count() > 0:
+    if fact_df.shape[0] > 0:
         with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
             wr.redshift.to_sql(
                 fact_df,

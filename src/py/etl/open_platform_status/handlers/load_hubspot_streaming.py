@@ -36,7 +36,7 @@ def handle(event, context):
 
     cdc_df = wr.s3.read_parquet(
         f"s3://{bucket}/{key}"
-    )[["company_id", "event_name"]]
+    )
 
     with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_dbname) as conn:
         companies = cdc_df["company_id"].drop_duplicates().to_list()
@@ -74,21 +74,33 @@ def handle(event, context):
     ]
 
     # Export to HubSpot service bucket
-    body = bytes(convert_to_json_line(inputs).encode("utf-8"))
-    file_name = str(uuid.uuid4()) + ".json"
-    export_key = f"{hs_svc_prefix}/{file_name}"
-    s3.put_object(Bucket=hs_svc_bucket, Key=export_key, Body=body)
+    if len(inputs) > 0:
+        body = bytes(convert_to_json_line(inputs).encode("utf-8"))
+        file_name = str(uuid.uuid4()) + ".json"
+        export_key = f"{hs_svc_prefix}/{file_name}"
+        s3.put_object(Bucket=hs_svc_bucket, Key=export_key, Body=body)
 
-    return {
-        "status": 200,
-        "bucket": bucket,
-        "key": key,
-        "dst_bucket": hs_svc_bucket,
-        "dst_key": export_key,
-        "total": cdc_df.count(),
-        "success": len(inputs),
-        "failed": {
-            "missing_hubspot_id": missing_rel_df.count(),
-            "missing_platform": missing_platform_df.count(),
-        },
-    }
+        return {
+            "status": 200,
+            "bucket": bucket,
+            "key": key,
+            "dst_bucket": hs_svc_bucket,
+            "dst_key": export_key,
+            "total": cdc_df.count(),
+            "success": len(inputs),
+            "failed": {
+                "missing_hubspot_id": missing_rel_df.count(),
+                "missing_platform": missing_platform_df.count(),
+            },
+        }
+    else:
+        return {
+            "status": 200,
+            "bucket": bucket,
+            "key": key,
+            "total": cdc_df.count(),
+            "failed": {
+                "missing_hubspot_id": missing_rel_df.count(),
+                "missing_platform": missing_platform_df.count(),
+            },
+        }
