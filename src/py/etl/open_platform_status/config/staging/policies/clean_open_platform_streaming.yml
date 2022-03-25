@@ -26,8 +26,9 @@ Policy:
       - Effect: Allow
         Action:
           - s3:PutObject
+          - s3:DeleteObject
         Resource:
-          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/*
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/dynamodb/streaming/*
       # Allow all Glue actions
       - Effect: Allow
         Action:
