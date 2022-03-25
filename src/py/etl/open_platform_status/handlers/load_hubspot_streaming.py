@@ -41,7 +41,7 @@ def handle(event, context):
     with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_dbname) as conn:
         companies = cdc_df["company_id"].drop_duplicates().to_list()
         rs_df = get_hubspot_mapping(
-            companies, schema=rs_hubspot_schema, table=rs_hubspot_schema, conn=conn
+            companies, schema=rs_hubspot_schema, table=rs_hubspot_table, conn=conn
         )
 
     # Attach HubSpot ID
