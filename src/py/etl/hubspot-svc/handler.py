@@ -33,7 +33,7 @@ def get_hubspot_token(secret_arn: str):
 
 def batch_company_update(inputs: List[HubspotUpdateInput]):
     access_token = get_hubspot_token(access_token_arn)
-    hs = hubspot.Client.create(access_token=access_token)
+    client = hubspot.Client.create(access_token=access_token)
     row_count = len(inputs)
 
     for cur_start in range(0, row_count, step_size):
@@ -46,7 +46,7 @@ def batch_company_update(inputs: List[HubspotUpdateInput]):
             inputs=inputs[cur_start:cur_end]
         )
         try:
-            hs.client.crm.companies.batch_api.update(
+            client.crm.companies.batch_api.update(
                 batch_input_simple_public_object_batch_input=hs_input
             )
         except ApiException as e:
