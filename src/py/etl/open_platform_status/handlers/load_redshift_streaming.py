@@ -45,7 +45,7 @@ def handle(event, context):
             f"""
             SELECT company_key, dynamodb_key as company_id
             FROM {rs_dim_schema}.dim_company
-            WHERE company_id IN {company_ids}
+            WHERE company_id IN ({str(company_ids)[1:-1]})
             """,
             con=conn,
         )

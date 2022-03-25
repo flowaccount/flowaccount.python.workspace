@@ -23,7 +23,7 @@ def get_hubspot_mapping(
         f"""
         SELECT hubspot_id, flowaccount_id AS company_id
         FROM {schema}.{table}
-        WHERE company_id IN {str(companies)}
+        WHERE company_id IN ({str(companies)[1:-1]})
         """,
         con=conn,
     )
