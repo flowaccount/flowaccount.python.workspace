@@ -118,7 +118,6 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - prefix: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
-            - suffix: .json
           existing: true
 
   load-redshift-streaming:
