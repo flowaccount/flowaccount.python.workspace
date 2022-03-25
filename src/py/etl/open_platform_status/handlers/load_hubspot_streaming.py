@@ -47,19 +47,22 @@ def handle(event, context):
     # Attach HubSpot ID
     connection_df, missing_rel_df = attach_hubspot_id(cdc_df, rs_df)
     missing_rel = list(missing_rel_df["company_id"])
-    logging.warning(f"Missing HubSpot ID: {missing_rel}")
+    if len(missing_rel) > 0:
+        logging.warning(f"Missing HubSpot ID: {missing_rel}")
 
     # Filter known platforms
     platform_df, missing_platform_df = filter_platform(connection_df)
     missing_platform = list(
         zip(missing_platform_df["company_id"], missing_platform_df["platform_name"])
     )
-    logging.warning(f"Unknown platforms: {missing_platform}")
+    if len(missing_platform) > 0:
+        logging.warning(f"Unknown platforms: {missing_platform}")
 
     # Filter event
     event_df, invalid_df = filter_event(platform_df)
     invalid_events = list(zip(invalid_df["company_id"], invalid_df["event_name"]))
-    logging.warning(f"Ignore events: {invalid_events}")
+    if len(invalid_events) > 0:
+        logging.warning(f"Ignore events: {invalid_events}")
 
     # Aggregate latest status for each company and platform pair
     agg_df = aggregate_latest_status(event_df)
@@ -80,27 +83,30 @@ def handle(event, context):
         export_key = f"{hs_svc_prefix}/{file_name}"
         s3.put_object(Bucket=hs_svc_bucket, Key=export_key, Body=body)
 
-        return {
+        response = {
             "status": 200,
             "bucket": bucket,
             "key": key,
             "dst_bucket": hs_svc_bucket,
             "dst_key": export_key,
-            "total": cdc_df.count(),
+            "total": cdc_df.shape[0],
             "success": len(inputs),
             "failed": {
-                "missing_hubspot_id": missing_rel_df.count(),
-                "missing_platform": missing_platform_df.count(),
+                "missing_hubspot_id": missing_rel_df.shape[0],
+                "missing_platform": missing_platform_df.shape[0],
             },
         }
     else:
-        return {
+        response = {
             "status": 200,
             "bucket": bucket,
             "key": key,
-            "total": cdc_df.count(),
+            "total": cdc_df.shape[0],
             "failed": {
-                "missing_hubspot_id": missing_rel_df.count(),
-                "missing_platform": missing_platform_df.count(),
+                "missing_hubspot_id": missing_rel_df.shape[0],
+                "missing_platform": missing_platform_df.shape[0],
             },
         }
+    
+    logging.info(response)
+    return response

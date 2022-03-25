@@ -90,9 +90,12 @@ def handle(event, context):
                 con=conn,
             )
 
-    return {
+    response = {
         "status": 200,
-        "total": cdc_df.count(),
-        "new_companies": new_company_df.count(),
-        "new_fact": fact_df.count(),
+        "total": cdc_df.shape[0],
+        "new_companies": new_company_df.shape[0],
+        "new_fact": fact_df.shape[0],
     }
+
+    logging.info(response)
+    return response
