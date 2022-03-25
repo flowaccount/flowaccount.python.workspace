@@ -129,6 +129,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
+    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
     maximumEventAge: 300
     events:
       - sns:
@@ -140,9 +141,11 @@ functions:
     description: Load streamed open platform status to HubSpot update service bucket
     environment:
       REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
       HUBSPOT_SVC_BUCKET: ${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}
       HUBSPOT_SVC_COMPANY_UPDATE_PREFIX: ${env:HUBSPOT_SVC_COMPANY_UPDATE_PREFIX}
+    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
     maximumEventAge: 300
     events:
       - sns:
