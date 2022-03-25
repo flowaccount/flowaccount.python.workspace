@@ -146,6 +146,9 @@ functions:
       HUBSPOT_SVC_BUCKET: ${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}
       HUBSPOT_SVC_COMPANY_UPDATE_PREFIX: ${env:HUBSPOT_SVC_COMPANY_UPDATE_PREFIX}
     vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
+    layers:
+      - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
+      - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
     maximumEventAge: 300
     events:
       - sns:
