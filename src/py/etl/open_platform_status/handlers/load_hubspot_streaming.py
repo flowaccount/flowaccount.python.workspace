@@ -12,6 +12,7 @@ from flowaccount.etl.open_platform_status.load_hubspot_streaming import (
     get_hubspot_mapping)
 
 rs_secret_arn = os.environ["REDSHIFT_SECRET_ARN"]
+rs_dbname = os.environ["REDSHIFT_DB"]
 rs_hubspot_schema = os.environ["REDSHIFT_HUBSPOT_SCHEMA"]
 rs_hubspot_table = "company_ref"
 
@@ -37,7 +38,7 @@ def handle(event, context):
         f"s3://{bucket}/{key}"
     )[["company_id", "event_name"]]
 
-    with wr.redshift.connect(secret_id=rs_secret_arn, dbanme="test") as conn:
+    with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_dbname) as conn:
         companies = cdc_df["company_id"].drop_duplicates().to_list()
         rs_df = get_hubspot_mapping(
             companies, schema=rs_hubspot_schema, table=rs_hubspot_schema, conn=conn
