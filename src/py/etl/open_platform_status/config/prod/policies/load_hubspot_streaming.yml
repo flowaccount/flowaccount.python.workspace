@@ -49,3 +49,13 @@ Policy:
           - redshift-data:DescribeTable
         Resource:
           - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-prod-redshift-cluster
+      # Allow to attach VPC
+      - Effect: Allow
+        Action:
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeVpcs
+        Resource: "*"

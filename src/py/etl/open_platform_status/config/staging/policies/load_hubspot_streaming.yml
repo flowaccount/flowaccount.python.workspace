@@ -34,4 +34,14 @@ Policy:
           - s3:PutObject
         Resource:
           - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}/*
+      # Allow to attach VPC
+      - Effect: Allow
+        Action:
+          - ec2:CreateNetworkInterface
+          - ec2:DescribeNetworkInterfaces
+          - ec2:DeleteNetworkInterface
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeVpcs
+        Resource: "*"
 
