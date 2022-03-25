@@ -129,6 +129,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
+    maximumEventAge: 300
     events:
       - sns:
           arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
@@ -142,6 +143,7 @@ functions:
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
       HUBSPOT_SVC_BUCKET: ${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}
       HUBSPOT_SVC_COMPANY_UPDATE_PREFIX: ${env:HUBSPOT_SVC_COMPANY_UPDATE_PREFIX}
+    maximumEventAge: 300
     events:
       - sns:
           arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
