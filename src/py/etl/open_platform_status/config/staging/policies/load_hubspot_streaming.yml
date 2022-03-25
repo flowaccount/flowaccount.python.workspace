@@ -34,6 +34,28 @@ Policy:
           - s3:PutObject
         Resource:
           - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}/*
+      # Allow R/W on RedShift
+      - Effect: Allow
+        Action:
+          - redshift-data:BatchExecuteStatement
+          - redshift-data:ExecuteStatement
+          - redshift-data:CancelStatement
+          - redshift-data:ListStatements
+          - redshift-data:GetStatementResult
+          - redshift-data:DescribeStatement
+          - redshift-data:ListDatabases
+          - redshift-data:ListSchemas
+          - redshift-data:ListTables
+          - redshift-data:DescribeTable
+        Resource:
+          - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-fadev-redshift-cluster
+      # Allow to retrieve secret
+      - Effect: Allow
+        Action:
+          - secretsmanager:GetSecretValue
+        Resource:
+          - ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+          - ${file(./config/${opt:stage}/secrets.yml):HubSpotTokenSecretArn}
       # Allow to attach VPC
       - Effect: Allow
         Action:

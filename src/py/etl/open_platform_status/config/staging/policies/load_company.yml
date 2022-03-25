@@ -53,7 +53,7 @@ Policy:
         Action:
           - secretsmanager:GetSecretValue
         Resource:
-          - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:*
+          - ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
       # Allow to attach VPC
       - Effect: Allow
         Action:
