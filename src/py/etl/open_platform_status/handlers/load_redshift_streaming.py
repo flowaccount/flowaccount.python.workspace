@@ -5,6 +5,8 @@ import urllib.parse
 
 import awswrangler as wr
 import pandas as pd
+from flowaccount.etl.open_platform_status.load_redshift_streaming import (
+    convert_to_fact_table, filter_new_company)
 
 rs_secret_arn = os.environ["REDSHIFT_SECRET_ARN"]
 rs_db_name = os.environ["REDSHIFT_DB"]
@@ -50,8 +52,7 @@ def handle(event, context):
         )
 
     # Get unregistered companies in RedShift
-    new_company_df = pd.merge(cdc_df, company_df, how="left", on="company_id")
-    new_company_df = new_company_df[new_company_df["company_key"].isna()]
+    new_company_df = filter_new_company(cdc_df, company_df)
     new_company_df = new_company_df[["company_id"]].rename(
         columns={"company_id": "dynamodb_key"}
     )
@@ -76,45 +77,11 @@ def handle(event, context):
             con=conn,
         )
 
-    fact_df = pd.merge(cdc_df, company_df, on="company_id", how="inner")
-
-    # Create date key
-    fact_df["year"] = fact_df["approximate_creation_date_time"].dt.year
-    fact_df["month"] = fact_df["approximate_creation_date_time"].dt.year
-    fact_df["day"] = fact_df["approximate_creation_date_time"].dt.day
-    fact_df["date_key"] = pd.to_numeric(
-        fact_df["year"].astype("str")
-        + fact_df["month"].astype("str")
-        + fact_df["day"].astype("str"),
-        errors="coerce",
-    )
-
-    # Create time key
-    fact_df["hour"] = fact_df["approximate_creation_date_time"].dt.hour
-    fact_df["minute"] = fact_df["approximate_creation_date_time"].dt.minute
-    fact_df["second"] = fact_df["approximate_creation_date_time"].dt.second
-    fact_df["time_key"] = pd.to_numeric(
-        fact_df["hour"].astype("str")
-        + fact_df["minute"].astype("str").zfill(2)
-        + fact_df["second"].astype("str").zfill(2),
-        errors="coerce",
-    )
-
-    # Rename column
-    fact_df = fact_df.rename(columns={"platform_name": "platform"})
-
-    # Convert event to status
-    fact_df["status"] = fact_df["event_name"].map({"INSERT": True, "REMOVE": False})
-
-    # Drop invalid rows
-    fact_df = fact_df.dropna()
-
-    # Form columns
-    fact_df = fact_df[["date_key", "time_key", "company_key", "platform", "status"]]
+    fact_df = convert_to_fact_table(cdc_df, company_df)
 
     with wr.redshift.connect(secret_id=rs_secret_arn, dbname=rs_db_name) as conn:
         wr.redshift.to_sql(
-            new_company_df,
+            fact_df,
             schema=rs_fact_schema,
             table="fact_open_platform_connection",
             mode="append",
