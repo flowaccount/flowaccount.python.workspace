@@ -4,7 +4,6 @@ import os
 import urllib.parse
 
 import awswrangler as wr
-import pandas as pd
 from flowaccount.etl.open_platform_status.load_redshift_streaming import (
     convert_to_fact_table, filter_new_company)
 
