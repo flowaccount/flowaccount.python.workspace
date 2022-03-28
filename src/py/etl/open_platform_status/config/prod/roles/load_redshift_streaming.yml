@@ -12,5 +12,3 @@ Role:
           Action: sts:AssumeRole
     Policies:
       - ${file(./config/${opt:stage}/policies.yml):LoadRedShiftStreamingPolicy}
-    ManagedPolicyArns:
-      - arn:aws:iam::${aws:accountId}:policy/vpc-permission-lambda
