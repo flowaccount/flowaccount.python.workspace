@@ -14,7 +14,7 @@ provider:
     HUBSPOT_BATCH_UPDATE_SIZE: 10
   s3:
     serviceBucket:
-      name: hubspot-service-bucket
+      name: ${env:BUCKET_NAME}
   layers:
     - ${env:HUBSPOT_LAYER_ARN}
   iam:
