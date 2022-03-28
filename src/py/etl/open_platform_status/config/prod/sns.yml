@@ -1,1 +1,1 @@
-StreamingCleanedSnsArn: CHANGE_ME
+StreamingCleanedSnsArn: arn:aws:sns:ap-southeast-1:490425202190:etl-open-platform-status-streaming-cleaned
