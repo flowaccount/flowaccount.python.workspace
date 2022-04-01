@@ -230,6 +230,7 @@ resources:
                 - Effect: Allow
                   Action:
                     - s3:PutObject
+                    - s3:DeleteObject
                   Resource:
                     - "arn:aws:s3:::${env:CLEAN_BUCKET}/${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon/*"
                 # Allow R/W Glue catalog
