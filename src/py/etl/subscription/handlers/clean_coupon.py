@@ -14,8 +14,10 @@ def clean_coupon(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = pd.DataFrame(raw_df)
 
     # Map values
-    df["discountType"] = df["discountType"].map({1: "Percent", 3: "Amount"})
-    df["active"] = df["status"].map({1: True})
+    df["discountType"] = df["discountType"].astype("string")
+    df["discountType"] = df["discountType"].map({"1": "Percent", "3": "Amount"})
+    df["status"] = df["status"].astype("string")
+    df["active"] = df["status"].map({"1": True})
 
     # Convert decimal
     decimal_context = Context(prec=38)
