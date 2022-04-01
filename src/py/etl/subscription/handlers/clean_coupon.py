@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 from pathlib import Path
 
 import awswrangler as wr
@@ -15,6 +16,7 @@ def clean_coupon(raw_df: pd.DataFrame) -> pd.DataFrame:
     # Map values
     df["discountType"] = df["discountType"].map({1: "Percent", 3: "Amount"})
     df["active"] = df["status"].map({1: True})
+    df["discountValue"] = df["discountValue"].apply(lambda x: Decimal(x))
 
     # Fill missing values
     df = df.fillna(
