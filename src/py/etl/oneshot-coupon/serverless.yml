@@ -1,0 +1,178 @@
+service: oneshot-coupon
+
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: ap-southeast-1
+  stage: prod
+  layers:
+    - arn:aws:lambda:ap-southeast-1:490425202190:layer:aws-data-wrangler-layer-py3-8:1
+
+custom:
+  pythonRequirements:
+    slim: true
+
+functions:
+  # load-dimension:
+  #   handler: handler.handle
+  #   description: Load coupon dimension
+  #   role: loadDimensionRole
+  #   environment:
+  #     REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:lambda-prod/secret/redshift-8IZCLY
+  #     REDSHIFT_DB: etl
+  #   vpc:
+  #     securityGroupIds:
+  #       - sg-00b9cd134942c69ab
+  #     subnetIds:
+  #       - subnet-0d6e3d18293e6fc84
+  #       - subnet-0a847db8b37130f1f
+  #   maximumEventAge: 300
+  refresh-subscription-coupon:
+    handler: refresh_handler.handle
+    description: Refresh Coupon in RedShift Subscription Table
+    role: refreshSubscriptionCouponRole
+    environment:
+      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:lambda-prod/secret/redshift-8IZCLY
+      REDSHIFT_DB: etl
+    vpc:
+      securityGroupIds:
+        - sg-00b9cd134942c69ab
+      subnetIds:
+        - subnet-0d6e3d18293e6fc84
+        - subnet-0a847db8b37130f1f
+    timeout: 300
+    events:
+      - schedule:
+          rate: rate(15 minutes)
+
+resources:
+  Resources:
+    # loadDimensionRole:
+    #   Type: AWS::IAM::Role
+    #   Properties:
+    #     RoleName: OneShotLoadDimensionRole
+    #     AssumeRolePolicyDocument:
+    #       Version: '2012-10-17'
+    #       Statement:
+    #         - Effect: Allow
+    #           Principal:
+    #             Service:
+    #               - lambda.amazonaws.com
+    #           Action: sts:AssumeRole
+    #     Policies:
+    #       - PolicyName: OneShotLoadDimensionPolicy
+    #         PolicyDocument: 
+    #           Version: '2012-10-17'
+    #           Statement:
+    #             # Allow create logging group
+    #             - Effect: Allow
+    #               Action:
+    #                 - logs:CreateLogStream
+    #                 - logs:CreateLogGroup
+    #               Resource:
+    #                 - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-prod*:*"
+    #             # Allow logging
+    #             - Effect: Allow
+    #               Action:
+    #                 - logs:PutLogEvents
+    #               Resource:
+    #                 - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-prod*:*:*"
+    #             # Allow R/W on RedShift
+    #             - Effect: Allow
+    #               Action:
+    #                 - redshift-data:BatchExecuteStatement
+    #                 - redshift-data:ExecuteStatement
+    #                 - redshift-data:CancelStatement
+    #                 - redshift-data:ListStatements
+    #                 - redshift-data:GetStatementResult
+    #                 - redshift-data:DescribeStatement
+    #                 - redshift-data:ListDatabases
+    #                 - redshift-data:ListSchemas
+    #                 - redshift-data:ListTables
+    #                 - redshift-data:DescribeTable
+    #               Resource:
+    #                 - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-prod-redshift-cluster
+    #             # Allow to retrieve secret
+    #             - Effect: Allow
+    #               Action:
+    #                 - secretsmanager:GetSecretValue
+    #               Resource:
+    #                 - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:lambda-prod/secret/redshift-8IZCLY
+    #             # Allow to attach VPC
+    #             - Effect: Allow
+    #               Action:
+    #                 - ec2:CreateNetworkInterface
+    #                 - ec2:DescribeNetworkInterfaces
+    #                 - ec2:DeleteNetworkInterface
+    #                 - ec2:DescribeSecurityGroups
+    #                 - ec2:DescribeSubnets
+    #                 - ec2:DescribeVpcs
+    #               Resource: "*"
+    refreshSubscriptionCouponRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: OneShotRefreshSubscriptionCouponRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: OneShotRefreshSubscriptionCouponPolicy
+            PolicyDocument: 
+              Version: '2012-10-17'
+              Statement:
+                # Allow create logging group
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:CreateLogGroup
+                  Resource:
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-prod*:*"
+                # Allow logging
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-prod*:*:*"
+                # Allow R/W on RedShift
+                - Effect: Allow
+                  Action:
+                    - redshift-data:BatchExecuteStatement
+                    - redshift-data:ExecuteStatement
+                    - redshift-data:CancelStatement
+                    - redshift-data:ListStatements
+                    - redshift-data:GetStatementResult
+                    - redshift-data:DescribeStatement
+                    - redshift-data:ListDatabases
+                    - redshift-data:ListSchemas
+                    - redshift-data:ListTables
+                    - redshift-data:DescribeTable
+                  Resource:
+                    - arn:aws:redshift:${aws:region}:${aws:accountId}:cluster:etl-redshift-prod-redshift-cluster
+                # Allow to retrieve secret
+                - Effect: Allow
+                  Action:
+                    - secretsmanager:GetSecretValue
+                  Resource:
+                    - arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:lambda-prod/secret/redshift-8IZCLY
+                # Allow to attach VPC
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeSecurityGroups
+                    - ec2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                  Resource: "*"
+
+plugins:
+  - serverless-python-requirements
