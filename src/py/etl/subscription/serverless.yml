@@ -73,6 +73,19 @@ functions:
     maximumRetryAttempts: 0
     # TODO: Attach RedShift VPC
 
+  load-coupon-to-fact:
+    handler: handlers/update_fact_table.handle
+    description: Update coupon to fact tables in RedShift
+    role: loadCouponToFactRole
+    environment:
+      REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
+      SPECTRUM_SCHEMA: spectrum
+      DIM_SCHEMA: dim
+      DIM_TABLE: dim_coupon
+      TARGET_TABLES: etl.subscription
+    maximumEventAge: 300
+    maximumRetryAttempts: 0
+
 
 resources:
   Resources:
@@ -238,6 +251,37 @@ resources:
               Action: sts:AssumeRole
         Policies:
           - PolicyName: EtlSubscriptionLoadCouponToDimensionPolicy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                # Allow create logging group
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:CreateLogGroup
+                  Resource:
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*"
+                # Allow logging
+                - Effect: Allow
+                  Action:
+                    - logs:PutLogEvents
+                  Resource:
+                    - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
+                # TODO: Allow executing query on RedShift
+    loadCouponToFactRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: EtlSubscriptionLoadCouponToFactRole
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: EtlSubscriptionLoadCouponToFactPolicy
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
