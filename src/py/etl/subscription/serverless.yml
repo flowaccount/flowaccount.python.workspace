@@ -59,10 +59,10 @@ functions:
     maximumEventAge: 300
     maximumRetryAttempts: 0
 
-  load-coupon-to-redshift:
+  load-coupon-to-dimension:
     handler: handlers/load_coupon_to_redshift.handle
     description: Load coupon from clean table to RedShift
-    role: loadCouponToRedShiftRole
+    role: loadCouponToDimensionRole
     environment:
       CLEAN_TABLE: ${CLEAN_TABLE}
       REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
@@ -224,10 +224,10 @@ resources:
                   Action:
                     - glue:*
                   Resource: "*"
-    loadCouponToRedShiftRole:
+    loadCouponToDimensionRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: EtlSubscriptionLoadCouponToRedShiftRole
+        RoleName: EtlSubscriptionLoadCouponToDimensionRole
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -237,7 +237,7 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: EtlSubscriptionLoadCouponToRedShiftPolicy
+          - PolicyName: EtlSubscriptionLoadCouponToDimensionPolicy
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
