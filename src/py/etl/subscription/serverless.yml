@@ -60,7 +60,7 @@ functions:
     maximumRetryAttempts: 0
 
   load-coupon-to-dimension:
-    handler: handlers/load_coupon_to_redshift.handle
+    handler: handlers/load_coupon_to_dimension.handle
     description: Load coupon from clean table to RedShift
     role: loadCouponToDimensionRole
     environment:
