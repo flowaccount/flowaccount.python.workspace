@@ -1,5 +1,5 @@
 import os
-from decimal import Decimal
+from decimal import Context, Decimal
 from pathlib import Path
 
 import awswrangler as wr
@@ -16,7 +16,13 @@ def clean_coupon(raw_df: pd.DataFrame) -> pd.DataFrame:
     # Map values
     df["discountType"] = df["discountType"].map({1: "Percent", 3: "Amount"})
     df["active"] = df["status"].map({1: True})
-    df["discountValue"] = df["discountValue"].apply(lambda x: Decimal(x))
+
+    # Convert decimal
+    decimal_context = Context(prec=38)
+    decimal_scale = Decimal("1.00000000")
+    df["discountValue"] = df["discountValue"].apply(
+        lambda x: Decimal(x, context=decimal_context).quantize(decimal_scale)
+    )
 
     # Fill missing values
     df = df.fillna(
