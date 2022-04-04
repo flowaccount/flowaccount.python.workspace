@@ -1,6 +1,7 @@
-import awswrangler as wr
-import os
 import logging
+import os
+
+import awswrangler as wr
 
 secret_arn = os.environ["REDSHIFT_SECRET_ARN"]
 catalog = os.environ["CLEAN_CATALOG"]
@@ -33,7 +34,7 @@ def handle(event, context):
             "active": "active",
         }
     )
-    
+
     logging.info(f"Loading RedShift coupon dimension {dbname}.{dim_schema}.{dim_table}")
     with wr.redshift.connect(secret_id=secret_arn, dbname=dbname) as conn:
         wr.redshift.to_sql(
@@ -45,5 +46,5 @@ def handle(event, context):
             use_column_names=True,
             con=conn,
         )
-    
+
     return {"status": 200}
