@@ -34,7 +34,7 @@ functions:
       TABLE_NAME: Coupon
       RAW_BUCKET: ${env:RAW_BUCKET}
       COUPON_PREFIX: streaming/${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon
-    maximumEventAge: 300
+    timeout: 300
     maximumRetryAttempts: 0
   
   clean-coupon:
@@ -44,7 +44,7 @@ functions:
     environment:
       CLEAN_BUCKET: ${env:CLEAN_BUCKET}
       COUPON_PREFIX: streaming/${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon
-    maximumEventAge: 300
+    timeout: 300
     maximumRetryAttempts: 0
   
   consolidate-clean-coupon:
@@ -56,7 +56,7 @@ functions:
       CLEAN_CATALOG: ${env:CLEAN_CATALOG}
       CLEAN_TABLE: ${env:CLUSTER_NAME}-${env:DB_NAME}-Coupon
       CLEAN_TABLE_PREFIX: ${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon
-    maximumEventAge: 300
+    timeout: 300
     maximumRetryAttempts: 0
 
   load-coupon-to-dimension:
@@ -69,7 +69,7 @@ functions:
       SPECTRUM_SCHEMA: spectrum
       DIM_SCHEMA: dim
       DIM_TABLE: dim_coupon
-    maximumEventAge: 300
+    timeout: 300
     maximumRetryAttempts: 0
     # TODO: Attach RedShift VPC
 
@@ -83,7 +83,7 @@ functions:
       DIM_SCHEMA: dim
       DIM_TABLE: dim_coupon
       TARGET_TABLES: etl.subscription
-    maximumEventAge: 300
+    timeout: 300
     maximumRetryAttempts: 0
 
 

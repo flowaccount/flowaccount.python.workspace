@@ -85,7 +85,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
-    maximumEventAge: 300
+    timeout: 300
     vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
   
   load-hubspot:
@@ -99,7 +99,7 @@ functions:
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
       REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
-    maximumEventAge: 300
+    timeout: 300
     vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
     layers:
       - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
@@ -130,7 +130,7 @@ functions:
       REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
       REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
     vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
-    maximumEventAge: 300
+    timeout: 300
     events:
       - sns:
           arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
@@ -149,7 +149,7 @@ functions:
     layers:
       - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
       - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
-    maximumEventAge: 300
+    timeout: 300
     events:
       - sns:
           arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
