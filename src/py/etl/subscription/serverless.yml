@@ -64,14 +64,14 @@ functions:
     description: Load coupon from clean table to RedShift
     role: loadCouponToDimensionRole
     environment:
-      CLEAN_TABLE: ${CLEAN_TABLE}
+      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
+      CLEAN_TABLE: ${env:CLUSTER_NAME}-${env:DB_NAME}-Coupon
       REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
-      SPECTRUM_SCHEMA: spectrum
-      DIM_SCHEMA: dim
-      DIM_TABLE: dim_coupon
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
+      REDSHIFT_DIM_SCHEMA: ${env:REDSHIFT_DIM_SCHEMA}
+      REDSHIFT_DIM_TABLE: dim_coupon
     timeout: 300
     maximumRetryAttempts: 0
-    # TODO: Attach RedShift VPC
 
   load-coupon-to-fact:
     handler: handlers/update_fact_table.handle
