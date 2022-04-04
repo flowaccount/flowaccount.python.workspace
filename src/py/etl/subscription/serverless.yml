@@ -79,10 +79,13 @@ functions:
     role: loadCouponToFactRole
     environment:
       REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
-      SPECTRUM_SCHEMA: spectrum
-      DIM_SCHEMA: dim
-      DIM_TABLE: dim_coupon
-      TARGET_TABLES: etl.subscription
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
+      REDSHIFT_DIM_SCHEMA: ${env:REDSHIFT_DIM_SCHEMA}
+      REDSHIFT_DIM_TABLE: dim_coupon
+      REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
+      REDSHIFT_FACT_TABLE: subscriptions
+    layers:
+      - ${file(./layers.${opt:stage}.yml):Psycopg2Layer}
     timeout: 300
     maximumRetryAttempts: 0
 
