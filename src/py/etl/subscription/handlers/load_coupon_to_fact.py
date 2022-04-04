@@ -31,33 +31,35 @@ def handle(event, context):
     password = secret["password"]
 
     logging.info("Connecting to RedShift")
-    with psycopg2.connect(
+    conn = psycopg2.connect(
         host=host, port=port, dbname=dbname, user=user, password=password
-    ) as conn:
-        with conn.cursor() as cursor:
-            logging.info("Fill missing coupons")
-            cursor.execute(
-                f"""
-                UPDATE {fact_schema}.{fact_table} AS f
-                SET
-                coupon_key = {COUPON_NA_KEY}
-                WHERE f.coupon IS NULL AND f.coupon_key IS NULL;
-            """
-            )
+    )
+    with conn.cursor() as cursor:
+        logging.info("Fill missing coupons")
+        cursor.execute(
+            f"""
+            UPDATE {fact_schema}.{fact_table} AS f
+            SET
+            coupon_key = {COUPON_NA_KEY}
+            WHERE f.coupon IS NULL AND f.coupon_key IS NULL;
+        """
+        )
 
-            logging.info("Fill coupon keys")
-            cursor.execute(
-                f"""
-                UPDATE {fact_schema}.{fact_table} AS f
-                SET
-                    coupon_key = d.coupon_key
-                FROM {dim_schema}.{dim_table} AS d
-                WHERE f.coupon_key IS NULL AND d.mysql_id = f.coupon;
-            """
-            )
+        logging.info("Fill coupon keys")
+        cursor.execute(
+            f"""
+            UPDATE {fact_schema}.{fact_table} AS f
+            SET
+                coupon_key = d.coupon_key
+            FROM {dim_schema}.{dim_table} AS d
+            WHERE f.coupon_key IS NULL AND d.mysql_id = f.coupon;
+        """
+        )
 
         logging.info("Commit")
-        conn.commit()
+
+    logging.info("Closing connection")
+    conn.close()
 
     logging.info("Done")
     return {"status": 200}
