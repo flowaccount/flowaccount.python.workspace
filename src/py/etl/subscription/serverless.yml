@@ -4,6 +4,9 @@ frameworkVersion: '3'
 
 useDotenv: true
 
+plugins:
+  - serverless-step-functions
+
 provider:
   name: aws
   runtime: python3.8
