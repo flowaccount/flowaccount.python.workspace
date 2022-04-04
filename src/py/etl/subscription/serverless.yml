@@ -64,12 +64,14 @@ functions:
     description: Load coupon from clean table to RedShift
     role: loadCouponToDimensionRole
     environment:
-      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
       CLEAN_TABLE: ${env:CLEAN_COUPON_TABLE}
       REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
+      REDSHIFT_SPECTRUM_SCHEMA: ${env:REDSHIFT_SPECTRUM_SCHEMA}
       REDSHIFT_DIM_SCHEMA: ${env:REDSHIFT_DIM_SCHEMA}
       REDSHIFT_DIM_TABLE: dim_coupon
+    layers:
+      - ${file(./layers.${opt:stage}.yml):Psycopg2Layer}
     vpc: ${file(./vpc.${opt:stage}.yml):RedShiftVpc}
     timeout: 300
     maximumRetryAttempts: 0
@@ -272,6 +274,24 @@ resources:
                     - logs:PutLogEvents
                   Resource:
                     - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
+                # Allow retrieving clean table
+                - Effect: Allow
+                  Action:
+                    - glue:GetTable
+                  Resource:
+                    - "arn:aws:glue:${aws:region}:${aws:accountId}:catalog"
+                    - "arn:aws:glue:${aws:region}:${aws:accountId}:database/${env:CLEAN_CATALOG}"
+                    - "arn:aws:glue:${aws:region}:${aws:accountId}:table/${env:CLEAN_CATALOG}/${env:CLEAN_COUPON_TABLE}"
+                - Effect: Allow
+                  Action:
+                    - s3:ListBucket
+                  Resource:
+                    - "arn:aws:s3:::${env:CLEAN_BUCKET}"
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                  Resource:
+                    - "arn:aws:s3:::${env:CLEAN_BUCKET}/${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon/*"
                 # Allow to retrieve secret
                 - Effect: Allow
                   Action:
