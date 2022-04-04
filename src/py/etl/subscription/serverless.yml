@@ -275,24 +275,6 @@ resources:
                     - logs:PutLogEvents
                   Resource:
                     - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
-                # Allow retrieving clean table
-                - Effect: Allow
-                  Action:
-                    - glue:GetTable
-                  Resource:
-                    - "arn:aws:glue:${aws:region}:${aws:accountId}:catalog"
-                    - "arn:aws:glue:${aws:region}:${aws:accountId}:database/${env:CLEAN_CATALOG}"
-                    - "arn:aws:glue:${aws:region}:${aws:accountId}:table/${env:CLEAN_CATALOG}/${env:CLEAN_COUPON_TABLE}"
-                - Effect: Allow
-                  Action:
-                    - s3:ListBucket
-                  Resource:
-                    - "arn:aws:s3:::${env:CLEAN_BUCKET}"
-                - Effect: Allow
-                  Action:
-                    - s3:GetObject
-                  Resource:
-                    - "arn:aws:s3:::${env:CLEAN_BUCKET}/${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon/*"
                 # Allow to retrieve secret
                 - Effect: Allow
                   Action:
