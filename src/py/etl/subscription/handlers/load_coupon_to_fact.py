@@ -10,10 +10,10 @@ COUPON_NA_KEY = 1
 
 secret_arn = os.environ["REDSHIFT_SECRET_ARN"]
 dbname = os.environ["REDSHIFT_DB"]
-dim_schema = os.environ["DIM_SCHEMA"]
-dim_table = os.environ["DIM_TABLE"]
-fact_schema = os.environ["FACT_SCHEMA"]
-fact_table = os.environ["FACT_TABLE"]
+dim_schema = os.environ["REDSHIFT_DIM_SCHEMA"]
+dim_table = os.environ["REDSHIFT_DIM_TABLE"]
+fact_schema = os.environ["REDSHIFT_FACT_SCHEMA"]
+fact_table = os.environ["REDSHIFT_FACT_TABLE"]
 
 sm = boto3.client("secretsmanager")
 
@@ -57,6 +57,7 @@ def handle(event, context):
         )
 
         logging.info("Commit")
+        conn.commit()
 
     logging.info("Closing connection")
     conn.close()
