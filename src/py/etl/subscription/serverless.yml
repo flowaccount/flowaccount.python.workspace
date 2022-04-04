@@ -54,7 +54,7 @@ functions:
     environment:
       CLEAN_BUCKET: ${env:CLEAN_BUCKET}
       CLEAN_CATALOG: ${env:CLEAN_CATALOG}
-      CLEAN_TABLE: ${env:CLUSTER_NAME}-${env:DB_NAME}-Coupon
+      CLEAN_TABLE: ${env:CLEAN_COUPON_TABLE}
       CLEAN_TABLE_PREFIX: ${env:CLUSTER_NAME}/${env:DB_NAME}/Coupon
     timeout: 300
     maximumRetryAttempts: 0
@@ -65,7 +65,7 @@ functions:
     role: loadCouponToDimensionRole
     environment:
       CLEAN_CATALOG: ${env:CLEAN_CATALOG}
-      CLEAN_TABLE: ${env:CLUSTER_NAME}-${env:DB_NAME}-Coupon
+      CLEAN_TABLE: ${env:CLEAN_COUPON_TABLE}
       REDSHIFT_SECRET_ARN: ${env:REDSHIFT_SECRET_ARN}
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIM_SCHEMA: ${env:REDSHIFT_DIM_SCHEMA}
