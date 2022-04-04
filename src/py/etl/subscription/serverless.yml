@@ -70,6 +70,7 @@ functions:
       REDSHIFT_DB: ${env:REDSHIFT_DB}
       REDSHIFT_DIM_SCHEMA: ${env:REDSHIFT_DIM_SCHEMA}
       REDSHIFT_DIM_TABLE: dim_coupon
+    vpc: ${file(./vpc.${opt:stage}.yml):RedShiftVpc}
     timeout: 300
     maximumRetryAttempts: 0
 
@@ -271,7 +272,22 @@ resources:
                     - logs:PutLogEvents
                   Resource:
                     - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
-                # TODO: Allow executing query on RedShift
+                # Allow to retrieve secret
+                - Effect: Allow
+                  Action:
+                    - secretsmanager:GetSecretValue
+                  Resource:
+                    - ${env:REDSHIFT_SECRET_ARN}
+                # Allow to attach VPC
+                - Effect: Allow
+                  Action:
+                    - ec2:CreateNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeSecurityGroups
+                    - ec2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                  Resource: "*"
     loadCouponToFactRole:
       Type: AWS::IAM::Role
       Properties:
