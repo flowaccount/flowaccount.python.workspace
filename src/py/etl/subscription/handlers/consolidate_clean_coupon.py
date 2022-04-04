@@ -39,7 +39,7 @@ def handle(event, context):
         cur_df = wr.s3.read_parquet_table(database=clean_db, table=clean_table)
         new_df = (
             pd.concat([cur_df, delta_df])
-            .sort_values(["modified_on", "created_on"], asecending=False)
+            .sort_values(["modified_on", "created_on"], ascending=False)
             .drop_duplicates(subset=["id"])
         )
     else:
