@@ -77,7 +77,7 @@ functions:
     maximumRetryAttempts: 0
 
   load-coupon-to-fact:
-    handler: handlers/update_fact_table.handle
+    handler: handlers/load_coupon_to_fact.handle
     description: Update coupon to fact tables in RedShift
     role: loadCouponToFactRole
     environment:
