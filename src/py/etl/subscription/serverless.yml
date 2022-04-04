@@ -236,6 +236,7 @@ resources:
                 # Allow writing clean bucket
                 - Effect: Allow
                   Action:
+                    - s3:GetObject
                     - s3:PutObject
                     - s3:DeleteObject
                   Resource:
