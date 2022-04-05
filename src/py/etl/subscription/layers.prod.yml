@@ -1,2 +1,2 @@
 AwsWranglerLayer: arn:aws:lambda:ap-southeast-1:490425202190:layer:aws-data-wrangler-layer-py3-8:1
-Psycopg2Layer: ADD_ME
+Psycopg2Layer: arn:aws:lambda:ap-southeast-1:490425202190:layer:psycopg2-layer-py3-8:1
