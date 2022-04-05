@@ -4,7 +4,7 @@ StepFunctions:
       name: ${self:service}-${opt:stage}-coupon-workflow
       events:
         - schedule:
-            rate: rate(10 minutes)
+            rate: rate(1 hour)
             enabled: true
       definition:
         Comment: ETL for coupon table from flow-aurora-db to S3 data lake and RedShift
@@ -71,9 +71,22 @@ StepFunctions:
               Payload.$: $
               FunctionName:
                 Fn::GetAtt: [load-coupon-to-dimension, Arn]
-            Next: Load Coupon To Subscriptions
+            Next: Update Success
             Comment: Load the updated clean table into coupon dimension
-          Load Coupon To Subscriptions:
+          Update Success:
+            Type: Succeed
+    
+    redshiftCouponRefresh:
+      name: ${self:service}-${opt:stage}-redshift-coupon-refresh
+      events:
+        - schedule:
+            rate: rate(15 minutes)
+            enabled: true
+      definition:
+        Comment: Load keys from coupon dimension to legacy RedShift tables
+        StartAt: Load Subscriptions
+        States:
+          Load Subscriptions:
             Type: Task
             Resource: arn:aws:states:::lambda:invoke
             OutputPath: $.Payload
@@ -82,5 +95,6 @@ StepFunctions:
               FunctionName:
                 Fn::GetAtt: [load-coupon-to-fact, Arn]
             Next: Update Success
+            Comment: Load keys from coupon dimension to subscriptions table
           Update Success:
             Type: Succeed
