@@ -1,0 +1,86 @@
+StepFunctions:
+  stateMachines:
+    etlCouponWorkflow:
+      name: ${self:service}-${opt:stage}-coupon-workflow
+      events:
+        - schedule:
+            rate: rate(10 minutes)
+            enabled: true
+      definition:
+        Comment: ETL for coupon table from flow-aurora-db to S3 data lake and RedShift
+        StartAt: Extract Coupon
+        States:
+          Extract Coupon:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [extract-coupon, Arn]
+            Retry:
+              - ErrorEquals:
+                  - Lambda.ServiceException
+                  - Lambda.AWSLambdaException
+                  - Lambda.SdkClientException
+                IntervalSeconds: 2
+                MaxAttempts: 6
+                BackoffRate: 2
+            Next: Choice
+            Comment: Extract new and updated coupon since last run
+          Choice:
+            Type: Choice
+            Choices:
+              - Or:
+                  - Not:
+                      Variable: $.bucket
+                      IsPresent: true
+                  - Not:
+                      Variable: $.key
+                      IsPresent: true
+                Comment: No update
+                Next: No Update Success
+            Default: Clean Extracted
+          No Update Success:
+            Type: Succeed
+          Clean Extracted:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [clean-coupon, Arn]
+            Next: Consolidate Clean Table
+            Comment: Clean extracted coupon file
+          Consolidate Clean Table:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [consolidate-clean-coupon, Arn]
+            Next: Load Coupon Dimension
+            Comment: Consolidate the extract file with the coupon clean table
+          Load Coupon Dimension:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [load-coupon-to-dimension, Arn]
+            Next: Load Coupon To Subscriptions
+            Comment: Load the updated clean table into coupon dimension
+          Load Coupon To Subscriptions:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [load-coupon-to-fact, Arn]
+            Next: Update Success
+          Update Success:
+            Type: Succeed

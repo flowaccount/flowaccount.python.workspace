@@ -341,3 +341,5 @@ resources:
                     - ec2:DescribeSubnets
                     - ec2:DescribeVpcs
                   Resource: "*"
+
+stepFunctions: ${file(stepfunctions.yml):StepFunctions}
