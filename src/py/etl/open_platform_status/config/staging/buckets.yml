@@ -1,3 +1,4 @@
 RawBucket: pipat-raw-bucket
 CleanBucket: pipat-clean-bucket
 HubSpotSvcBucket: hubspot-service-bucket
+DdbBucket: pipat-raw-bucket

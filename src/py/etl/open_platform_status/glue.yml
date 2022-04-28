@@ -25,8 +25,8 @@ Glue:
           ddb_account_id: ${env:PRODUCTION_ACCOUNT_ID}
           ddb_table: flowaccount-open-platform-company-user-v2
           ddb_role_arn: ${env:DYNAMODB_ROLE_ARN}
-          export_bucket_owner_id: ${aws:accountId}
-          export_bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
+          export_bucket_owner_id: ${env:PRODUCTION_ACCOUNT_ID}
+          export_bucket: ${file(./config/${opt:stage}/buckets.yml):DdbBucket}
           export_prefix: dynamodb/tables
           clean_bucket: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
           clean_prefix: dynamodb/tables
