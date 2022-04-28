@@ -6,6 +6,8 @@ useDotenv: true
 
 plugins:
   - serverless-package-external
+  - serverless-glue
+  - serverless-step-functions
 
 custom:
   packageExternal:
@@ -21,6 +23,9 @@ package:
     - '!BUILD'
     - '!**/BUILD'
     - '!config/**'
+    - '!glue.yml'
+    - '!glue-scripts/**'
+    - '!./stepfunctions.yml'
 
 provider:
   name: aws
@@ -31,135 +36,27 @@ provider:
     - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
 
 functions:
-  export-table:
-    handler: handlers/export_table.handle
-    description: Export DynamoDB to S3
-    environment:
-      DYNAMODB_ARN: arn:aws:dynamodb:${aws:region}:${aws:accountId}
-      RAW_BUCKET: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
-      S3_PREFIX: ${env:RAW_DYNAMODB_PREFIX}
-
-  parse-export-manifest:
-    handler: handlers/parse_export_manifest.handle
-    description: Parse DynamoDB export manifest
-
-  extract-open-platform:
-    handler: handlers/extract_open_platform.handle
-
-  clean-open-platform:
-    handler: handlers/clean_open_platform.handle
-    role: cleanOpenPlatformRole
-    description: Clean new export manifest summary, manifest files and records
-    environment:
-      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
-      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
-    events:
-      - s3:
-          bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
-          event: s3:ObjectCreated:*
-          rules:
-            - prefix: dynamodb/tables/
-            - suffix: .json
-          existing: true
-
-  load-company:
-    handler: handlers/load_company.handle
-    role: loadCompanyRole
-    description: Load new companies into RedShift
-    environment:
-      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
-      TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
-      REDSHIFT_DB: ${env:REDSHIFT_DB}
-      REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
-    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
-  
-  load-open-platform:
-    handler: handlers/load_open_platform.handle
-    role: loadOpenPlatformRole
-    description: Load open platform status into RedShift
-    environment:
-      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
-      TABLE_KEY: ${env:CLEAN_DYNAMODB_PREFIX}/tables/flowaccount-open-platform-company-user-v2
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
-      REDSHIFT_DB: ${env:REDSHIFT_DB}
-      REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
-      REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
-    timeout: 300
-    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
-  
   load-hubspot:
     handler: handlers/load_hubspot.handle
     role: loadHubSpotRole
     description: Load latest open platform status to HubSpot
     environment:
+      CATALOG_DB: ${env:CLEAN_CATALOG}
+      CATALOG_TABLE: dynamodb_flowaccount_open_platform_company_user_v2
+      REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
+      REDSHIFT_DB: ${env:REDSHIFT_DB}
+      REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
       HUBSPOT_ACCESS_TOKEN_ARN: ${env:HUBSPOT_ACCESS_TOKEN_ARN}
-      REDSHIFT_SECRET_ARN: arn:aws:secretsmanager:${aws:region}:${aws:accountId}:secret:${env:REDSHIFT_SECRET_ID}
-      REDSHIFT_DB: ${env:REDSHIFT_DB}
-      REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
-      REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
-      REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
-    timeout: 300
     vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
+    timeout: 300
     layers:
       - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
       - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
 
-  clean-open-platform-streaming:
-    handler: handlers/clean_open_platform_streaming.handle
-    role: cleanOpenPlatformStreamingRole
-    description: Clean open platform status CDC into S3 clean bucket
-    environment:
-      CLEAN_BUCKET: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
-      CLEAN_CATALOG: ${env:CLEAN_CATALOG}
-    events:
-      - s3:
-          bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
-          event: s3:ObjectCreated:*
-          rules:
-            - prefix: dynamodb/streaming/tables/flowaccount-open-platform-company-user-v2
-          existing: true
+Glue: ${file(./glue.yml):Glue}
 
-  load-redshift-streaming:
-    handler: handlers/load_redshift_streaming.handle
-    role: loadRedShiftStreamingRole
-    description: Load streamed open platform status to RedShift
-    environment:
-      REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
-      REDSHIFT_DB: ${env:REDSHIFT_DB}
-      REDSHIFT_DIMENSION_SCHEMA: ${env:REDSHIFT_DIMENSION_SCHEMA}
-      REDSHIFT_FACT_SCHEMA: ${env:REDSHIFT_FACT_SCHEMA}
-    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
-    timeout: 300
-    events:
-      - sns:
-          arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
-  
-  load-hubspot-streaming:
-    handler: handlers/load_hubspot_streaming.handle
-    role: loadHubSpotStreamingRole
-    description: Load streamed open platform status to HubSpot update service bucket
-    environment:
-      REDSHIFT_SECRET_ARN: ${file(./config/${opt:stage}/secrets.yml):RedShiftSecretArn}
-      REDSHIFT_DB: ${env:REDSHIFT_DB}
-      REDSHIFT_HUBSPOT_SCHEMA: ${env:REDSHIFT_HUBSPOT_SCHEMA}
-      HUBSPOT_SVC_BUCKET: ${file(./config/${opt:stage}/buckets.yml):HubSpotSvcBucket}
-      HUBSPOT_SVC_COMPANY_UPDATE_PREFIX: ${env:HUBSPOT_SVC_COMPANY_UPDATE_PREFIX}
-    vpc: ${file(./config/${opt:stage}/vpc.yml):RedShiftVpc}
-    layers:
-      - ${file(./config/${opt:stage}/layers.yml):AwsWranglerLayer}
-      - ${file(./config/${opt:stage}/layers.yml):HubSpotLayer}
-    timeout: 300
-    events:
-      - sns:
-          arn: ${file(./config/${opt:stage}/sns.yml):StreamingCleanedSnsArn}
+stepFunctions: ${file(./stepfunctions.yml):stepFunctions}
 
 resources:
   Resources:
-    cleanOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformRole}
-    loadCompanyRole: ${file(./config/${opt:stage}/roles.yml):LoadCompanyRole}
-    loadOpenPlatformRole: ${file(./config/${opt:stage}/roles.yml):LoadOpenPlatformRole}
     loadHubSpotRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotRole}
-    cleanOpenPlatformStreamingRole: ${file(./config/${opt:stage}/roles.yml):CleanOpenPlatformStreamingRole}
-    loadRedShiftStreamingRole: ${file(./config/${opt:stage}/roles.yml):LoadRedShiftStreamingRole}
-    loadHubSpotStreamingRole: ${file(./config/${opt:stage}/roles.yml):LoadHubSpotStreamingRole}

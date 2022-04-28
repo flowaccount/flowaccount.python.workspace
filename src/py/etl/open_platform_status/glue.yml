@@ -1,0 +1,62 @@
+Glue:
+  bucketDeploy: aws-glue-assets-${aws:accountId}-${aws:region}
+  createBucket: false
+  s3Prefix: ${self:service}-${self:provider.stage}/scripts/
+  tempDirBucket: aws-glue-assets-${aws:accountId}-${aws:region}
+  tempDirS3Prefix: ${self:service}-${self:provider.stage}/temporary
+  jobs:
+    - name: export-and-clean-flowaccount-open-platform-company-user-v2
+      scriptPath: glue-scripts/export-and-clean-flowaccount-open-platform-company-user-v2.py
+      Description: Export flowaccount-open-platform-company-user-v2 table into S3 raw bucket and clean into S3 clean bucket
+      tempDir: true
+      type: spark
+      glueVersion: python3-2.0
+      role: arn:aws:iam::${aws:accountId}:role/GlueJobRole
+      MaxConcurrentRuns: 1
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      Timeout: 2880
+      MaxRetries: 0
+      DefaultArguments:
+        class: GlueApp
+        jobBookmarkOption: job-bookmark-disable
+        customArguments:
+          ddb_region: ${aws:region}
+          ddb_account_id: ${env:PRODUCTION_ACCOUNT_ID}
+          ddb_table: flowaccount-open-platform-company-user-v2
+          ddb_role_arn: ${env:DYNAMODB_ROLE_ARN}
+          export_bucket_owner_id: ${aws:accountId}
+          export_bucket: ${file(./config/${opt:stage}/buckets.yml):RawBucket}
+          export_prefix: dynamodb/tables
+          clean_bucket: ${file(./config/${opt:stage}/buckets.yml):CleanBucket}
+          clean_prefix: dynamodb/tables
+      Tags:
+        serverless_service: ${self:service}
+
+    - name: load-lazada-shopee-connection-status-to-redshift
+      scriptPath: glue-scripts/load-lazada-shopee-connection-status-to-redshift.py
+      Description: Update Lazada and Shopee connection status in company dimension in RedShift
+      tempDir: true
+      type: spark
+      glueVersion: python3-2.0
+      role: arn:aws:iam::${aws:accountId}:role/GlueJobRole
+      MaxConcurrentRuns: 1
+      WorkerType: G.1X
+      NumberOfWorkers: 2
+      Connections:
+        - redshift-connection
+      Timeout: 2880
+      MaxRetries: 0
+      DefaultArguments:
+        class: GlueApp
+        jobBookmarkOption: job-bookmark-disable
+        customArguments:
+          catalog_db: clean
+          catalog_table: dynamodb_flowaccount_open_platform_company_user_v2
+          redshift_connection: redshift-connection
+          staging_db: test
+          staging_schema: staging
+          staging_table: dim_company__lazada_shopee_connection
+          staging_temp_table: stage_table_bdc436d34f65450490182e692592971b
+      Tags:
+        serverless_service: ${self:service}

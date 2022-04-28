@@ -1,0 +1,79 @@
+stepFunctions:
+  validate: true
+  stateMachines:
+    etl-dynamodb-workflow:
+      name: ${self:service}-${self:provider.stage}-workflow
+      role: arn:aws:iam::${aws:accountId}:role/EtlStepFunctionsServiceRole
+      events:
+        - schedule: cron(0 21 * * ? *)
+      definition:
+        Comment: A description of my state machine
+        StartAt: Start Export Table
+        States:
+          Start Export Table:
+            Type: Task
+            Resource: arn:aws:states:::glue:startJobRun.sync
+            Parameters:
+              JobName: export-and-clean-flowaccount-open-platform-company-user-v2
+            Next: Check Crawler Status 1
+          Check Crawler Status 1:
+            Type: Task
+            Next: Is Crawler Ready
+            Parameters:
+              Name: ${file(./config/${opt:stage}/crawlers.yml):s3CleanDynamoDB}
+            Resource: arn:aws:states:::aws-sdk:glue:getCrawler
+            ResultSelector:
+              state.$: $.Crawler.State
+          Is Crawler Ready:
+            Type: Choice
+            Choices:
+              - Variable: $.state
+                StringMatches: READY
+                Next: Crawl Exported Table
+            Default: Wait for Crawler 1
+          Wait for Crawler 1:
+            Type: Wait
+            Seconds: 5
+            Next: Check Crawler Status 1
+          Crawl Exported Table:
+            Type: Task
+            Next: Wait For Crawler 2
+            Parameters:
+              Name: ${file(./config/${opt:stage}/crawlers.yml):s3CleanDynamoDB}
+            Resource: arn:aws:states:::aws-sdk:glue:startCrawler
+          Wait For Crawler 2:
+            Type: Wait
+            Seconds: 30
+            Next: Check Crawler Status 2
+          Check Crawler Status 2:
+            Type: Task
+            Next: Has Crawling Finished
+            Parameters:
+              Name: ${file(./config/${opt:stage}/crawlers.yml):s3CleanDynamoDB}
+            Resource: arn:aws:states:::aws-sdk:glue:getCrawler
+            ResultSelector:
+              state.$: $.Crawler.State
+          Has Crawling Finished:
+            Type: Choice
+            Choices:
+              - Variable: $.state
+                StringMatches: READY
+                Next: Load HubSpot
+            Default: Wait For Crawler 2
+          Load HubSpot:
+            Type: Task
+            Resource: arn:aws:states:::lambda:invoke
+            OutputPath: $.Payload
+            Parameters:
+              Payload.$: $
+              FunctionName:
+                Fn::GetAtt: [load-hubspot, Arn]
+            Retry:
+              - ErrorEquals:
+                  - Lambda.ServiceException
+                  - Lambda.AWSLambdaException
+                  - Lambda.SdkClientException
+                IntervalSeconds: 2
+                MaxAttempts: 6
+                BackoffRate: 2
+            End: true

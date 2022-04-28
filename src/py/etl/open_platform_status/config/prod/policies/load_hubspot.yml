@@ -16,6 +16,22 @@ Policy:
           - logs:PutLogEvents
         Resource:
           - "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/${self:service}-${opt:stage}*:*:*"
+            # Allow reading catalog
+      - Effect: Allow
+        Action:
+          - glue:GetTable
+        Resource:
+          - arn:aws:glue:${aws:region}:${aws:accountId}:catalog
+          - arn:aws:glue:${aws:region}:${aws:accountId}:database/${env:CLEAN_CATALOG}
+          - arn:aws:glue:${aws:region}:${aws:accountId}:table/${env:CLEAN_CATALOG}/dynamodb_flowaccount_open_platform_company_user_v2
+      # Allow reading S3
+      - Effect: Allow
+        Action:
+          - s3:ListBucket
+          - s3:GetObject
+        Resource:
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}
+          - arn:aws:s3:::${file(./config/${opt:stage}/buckets.yml):CleanBucket}/*
       # Allow R/W on RedShift
       - Effect: Allow
         Action:

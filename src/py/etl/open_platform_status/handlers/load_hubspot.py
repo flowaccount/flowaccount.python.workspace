@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from typing import List
 
 import awswrangler as wr
 import boto3
@@ -8,70 +9,71 @@ import hubspot as hs
 import pandas as pd
 from hubspot.crm.companies import (ApiException,
                                    BatchInputSimplePublicObjectBatchInput)
-from redshift_connector import Connection as RedShiftConnection
 
-secret_id = os.environ["REDSHIFT_SECRET_ARN"]
+catalog_db = os.environ["CATALOG_DB"]
+catalog_table = os.environ["CATALOG_TABLE"]
+secret_arn = os.environ["REDSHIFT_SECRET_ARN"]
 dbname = os.environ["REDSHIFT_DB"]
-fact_schema = os.environ["REDSHIFT_FACT_SCHEMA"]
-dim_schema = os.environ["REDSHIFT_DIMENSION_SCHEMA"]
 hubspot_schema = os.environ["REDSHIFT_HUBSPOT_SCHEMA"]
 hubspot_token_arn = os.environ["HUBSPOT_ACCESS_TOKEN_ARN"]
 
 
-def get_platform_from_redshift(
-    platform_schema: str, hubspot_schema: str, conn: RedShiftConnection
+def get_platform_connection_from_catalog(
+    catalog_db: str, catalog_table: str
 ) -> pd.DataFrame:
-    """Get latest (company, platform) pair connection status from RedShift."""
+    platform_df = wr.s3.read_parquet_table(
+        database=catalog_db,
+        table=catalog_table,
+        columns=["company_id", "platform_name", "is_delete"],
+    )
+    return platform_df
+
+
+def get_hubspot_mapping_from_redshift(
+    hubspot_schema: str, company_ids: List[int], conn
+) -> pd.DataFrame:
+    """Get HubSpot mapping from RedShift."""
 
     query = f"""
-            WITH cte_1 AS (
-                SELECT
-                    company_key,
-                    platform,
-                    status,
-                    ROW_NUMBER() OVER(
-                        PARTITION BY company_key, platform
-                        ORDER BY date_key DESC
-                    ) AS row_num
-                FROM {fact_schema}.fact_open_platform_connection
-            )
             SELECT
-                CAST(h.flowaccount_id AS BIGINT) AS flowaccount_id,
-                h.hubspot_id AS hubspot_id,
-                f.platform AS platform,
-                f.status AS status
-            FROM cte_1 AS f
-            JOIN {dim_schema}.dim_company AS c ON c.company_key = f.company_key
-            JOIN {hubspot_schema}.company_ref AS h ON h.flowaccount_id = c.dynamodb_key
-            WHERE row_num = 1
+                CAST(flowaccount_id AS BIGINT) AS id,
+                hubspot_id
+            FROM {hubspot_schema}.company_ref
         """
-    redshift_df = wr.redshift.read_sql_query(query, con=conn)
 
-    redshift_df["platform"] = redshift_df["platform"].astype("category")
+    if company_ids is not None:
+        query += f"""
+            WHERE id IN {str(company_ids).replace("[", "(").replace("]", ")")}
+        """
 
-    return redshift_df
-
-
-def agg_platform(name: str):
-    def _agg_platform(s: pd.Series):
-        if not s[s == name].empty:
-            return "yes"
-        else:
-            return "no"
-
-    return _agg_platform
+    hubspot_df = wr.redshift.read_sql_query(query, con=conn)
+    return hubspot_df
 
 
-def aggregate_platform_by_company(redshift_df: pd.DataFrame):
-    agg_df = redshift_df.groupby("hubspot_id").agg(
-        foodstory_api=pd.NamedAgg(
-            column="platform", aggfunc=agg_platform("Food Story")
+def aggregate_open_platform_status(
+    platform_df: pd.DataFrame, hubspot_df: pd.DataFrame
+) -> pd.DataFrame:
+    def has_connection(platform: str):
+        return lambda x: platform in set(x)
+
+    connected_df = platform_df[~platform_df["is_delete"]]
+    merge_df = hubspot_df.merge(
+        connected_df, how="left", left_on="id", right_on="company_id"
+    )
+    merge_df = merge_df[["hubspot_id", "platform_name"]]
+    agg_df = merge_df.groupby("hubspot_id").agg(
+        has_lazada_connection=pd.NamedAgg(
+            column="platform_name", aggfunc=has_connection("lazada")
         ),
-        k_cash_connect_api=pd.NamedAgg(
-            column="platform", aggfunc=agg_platform("K-Cash")
+        has_shopee_connection=pd.NamedAgg(
+            column="platform_name", aggfunc=has_connection("shopee")
         ),
-        lazada_api=pd.NamedAgg(column="platform", aggfunc=agg_platform("Lazada")),
-        shopee_api=pd.NamedAgg(column="platform", aggfunc=agg_platform("Shopee")),
+        has_kcash_connection=pd.NamedAgg(
+            column="platform_name", aggfunc=has_connection("kcash")
+        ),
+        has_foodstory_connection=pd.NamedAgg(
+            column="platform_name", aggfunc=has_connection("foodstory")
+        ),
     )
     return agg_df.reset_index()
 
@@ -90,10 +92,10 @@ def convert_open_platform_status_to_hubspot_inputs(df: pd.DataFrame):
             }
             for hubspot_id, foodstory_api, k_cash_connect_api, lazada_api, shopee_api in zip(
                 df["hubspot_id"],
-                df["foodstory_api"],
-                df["k_cash_connect_api"],
-                df["lazada_api"],
-                df["shopee_api"],
+                df["has_foodstory_connection"].map({True: "yes", False: "no"}),
+                df["has_kcash_connection"].map({True: "yes", False: "no"}),
+                df["has_lazada_connection"].map({True: "yes", False: "no"}),
+                df["has_shopee_connection"].map({True: "yes", False: "no"}),
             )
         ]
     )
@@ -124,10 +126,15 @@ def hubspot_batch_update_platform(
 def handle(event, context):
     """Load latest open platform status to HubSpot."""
 
-    # Get platform status for all HubSpot companies
-    with wr.redshift.connect(secret_id=secret_id, dbname=dbname) as conn:
-        redshift_df = get_platform_from_redshift(dim_schema, hubspot_schema, conn)
-    agg_df = aggregate_platform_by_company(redshift_df)
+    platform_df = get_platform_connection_from_catalog(catalog_db, catalog_table)
+
+    # Get HubSpot mapping
+    with wr.redshift.connect(secret_id=secret_arn, dbname=dbname) as conn:
+        hubspot_df = get_hubspot_mapping_from_redshift(
+            hubspot_schema, list(platform_df["company_id"].drop_duplicates()), conn
+        )
+
+    agg_df = aggregate_open_platform_status(platform_df, hubspot_df)
 
     # Retrieve HubSpot access token
     sm_client = boto3.client("secretsmanager")
