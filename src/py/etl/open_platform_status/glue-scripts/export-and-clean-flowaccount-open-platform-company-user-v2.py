@@ -49,7 +49,7 @@ ddb_connection_options = {
     "dynamodb.tableArn": f"arn:aws:dynamodb:{region}:{ddb_account_id}:table/{table}",
     "dynamodb.s3.bucket": export_bucket,
     "dynamodb.s3.prefix": f"dynamodb/tables/{table}",
-    "dynamodb.s3.bucketOwner": export_bucket_owner_id,
+    "dynamodb.s3.bucketOwner": ddb_account_id,
 }
 if len(ddb_role_arn) > 0:
     ddb_connection_options["dynamodb.sts.roleArn"] = ddb_role_arn
