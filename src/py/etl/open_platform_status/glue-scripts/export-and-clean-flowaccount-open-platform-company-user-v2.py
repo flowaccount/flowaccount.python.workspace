@@ -51,7 +51,7 @@ ddb_connection_options = {
     "dynamodb.s3.prefix": f"dynamodb/tables/{table}",
     "dynamodb.s3.bucketOwner": ddb_account_id,
 }
-if len(ddb_role_arn) > 0:
+if ddb_role_arn.startswith("arn:aws:iam"):
     ddb_connection_options["dynamodb.sts.roleArn"] = ddb_role_arn
 
 unnest_dyf = glue_context.create_dynamic_frame.from_options(
@@ -97,7 +97,10 @@ mapped_df15 = mapped_df14.withColumn("access_token", col("accessToken").cast("st
 mapped_df16 = mapped_df15.withColumn(
     "disconnect_at", from_unixtime("disconnectAt").cast("timestamp")
 )
-mapped_df17 = mapped_df16.drop(
+mapped_df17 = mapped_df16.withColumn(
+    "reauthorize_at", from_unixtime("reauthorizeAt").cast("timestamp")
+)
+mapped_df18 = mapped_df17.drop(
     "companyId",
     "shopId",
     "isDelete",
@@ -114,8 +117,9 @@ mapped_df17 = mapped_df16.drop(
     "refreshToken",
     "accessToken",
     "disconnectAt",
+    "reauthorizeAt",
 )
-mapped_df = mapped_df17
+mapped_df = mapped_df18
 mapped_dyf = DynamicFrame.fromDF(mapped_df, glue_context, "mapped_dyf")
 
 # Use Spark DataFrame to write because DynamicFrame does not support overwrite
